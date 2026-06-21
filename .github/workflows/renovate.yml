@@ -33,16 +33,21 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        # Renovate autodiscovers and updates every boykush/* repository, so this
-        # runner intentionally provisions an owner-wide token with broad
-        # installation permissions. That breadth is by design, not a misconfig.
-        # zizmor: ignore[github-app]
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
-          # Scope the token to every repository the App can access under this owner.
+          # Renovate autodiscovers every boykush/* repository, so the token must
+          # stay owner-wide. This single "all repositories" finding is knowingly
+          # accepted: pinning to a repositories: list would defeat autodiscovery
+          # of newly created repos. The permissions below are still scoped down.
           owner: ${{ github.repository_owner }} # zizmor: ignore[github-app]
+          # Scope the token to only the permissions Renovate needs instead of
+          # inheriting every permission the App was granted at installation.
+          permission-contents: write # create branches and commits
+          permission-pull-requests: write # open and update pull requests
+          permission-issues: write # maintain the dependency dashboard issue
+          permission-workflows: write # update pinned action SHAs in workflows
 
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
