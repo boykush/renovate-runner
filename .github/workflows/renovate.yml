@@ -48,6 +48,13 @@ jobs:
         with:
           configurationFile: config.js
           token: ${{ steps.app-token.outputs.token }}
+          # Pin to the last release before a regression broke onboarding PR creation.
+          # 43.232.1 (renovatebot/renovate#44098) moved `productLinks` to global-only
+          # config, but the onboarding PR template still reads `config.productLinks`,
+          # so every onboarding run crashes with:
+          #   "Cannot read properties of undefined (reading 'homepage')"
+          # Remove this pin once an upstream fix is released.
+          renovate-version: 43.232.0
         env:
           LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
           # Empty string is treated as "unset" by Renovate, so scheduled runs are live.
