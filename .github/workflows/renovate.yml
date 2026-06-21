@@ -1,0 +1,54 @@
+name: Renovate
+
+on:
+  schedule:
+    # Every 4 hours
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Renovate log level'
+        type: choice
+        default: info
+        options:
+          - info
+          - debug
+      dryRun:
+        description: 'Dry run (do not create branches or PRs)'
+        type: boolean
+        default: false
+
+# Never run two Renovate jobs at the same time; let an in-flight run finish.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+# The job authenticates to other repos with the GitHub App token, not GITHUB_TOKEN.
+permissions:
+  contents: read
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3.2.0
+        with:
+          app-id: ${{ vars.RENOVATE_APP_ID }}
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+          # Scope the token to every repository the App can access under this owner.
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@v46.1.15
+        with:
+          configurationFile: config.js
+          token: ${{ steps.app-token.outputs.token }}
+        env:
+          LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
+          # Empty string is treated as "unset" by Renovate, so scheduled runs are live.
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun && 'full' || '' }}
