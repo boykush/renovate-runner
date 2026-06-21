@@ -33,18 +33,26 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v3.2.0
+        # Renovate autodiscovers and updates every boykush/* repository, so this
+        # runner intentionally provisions an owner-wide token with broad
+        # installation permissions. That breadth is by design, not a misconfig.
+        # zizmor: ignore[github-app]
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
           # Scope the token to every repository the App can access under this owner.
-          owner: ${{ github.repository_owner }}
+          owner: ${{ github.repository_owner }} # zizmor: ignore[github-app]
 
       - name: Checkout
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # Only config.js is needed here; Renovate uses the App token for all git
+          # operations, so the checkout's git credential should not be persisted.
+          persist-credentials: false
 
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v46.1.15
+        uses: renovatebot/github-action@8217b3fc286df088d7c27f3255fe8414463bc0fd # v46.1.15
         with:
           configurationFile: config.js
           token: ${{ steps.app-token.outputs.token }}
