@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"]
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "description": "Workflows distributed by boykush/github-management are managed by Terraform and overwritten on `terraform apply`; do not update them here. Add new managed workflows to this list as they are introduced.",
+      "matchFileNames": [".github/workflows/zizmor.yml"],
+      "enabled": false
+    }
+  ]
 }
