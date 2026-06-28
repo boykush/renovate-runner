@@ -1,6 +1,6 @@
 # renovate-runner
 
-boykush 個人アカウントの**全リポジトリを横断**して [Renovate](https://docs.renovatebot.com/) を実行する、セルフホスト型のランナーです。GitHub Actions 上でスケジュール実行し、GitHub App の権限で各リポジトリの依存更新 PR を自動作成します。
+boykush 個人アカウントの**対象リポジトリを横断**して [Renovate](https://docs.renovatebot.com/) を実行する、セルフホスト型のランナーです。GitHub Actions 上でスケジュール実行し、GitHub App の権限で各リポジトリの依存更新 PR を自動作成します。
 
 > managed by boykush/github-management
 
@@ -12,7 +12,7 @@ boykush 個人アカウントの**全リポジトリを横断**して [Renovate]
 | `config.js` | セルフホスト用のグローバル設定（autodiscover / onboarding など）。**全リポジトリ共通**の挙動を定義 |
 | `renovate.json` | この `renovate-runner` リポジトリ自身の依存設定（onboarding 済み扱い） |
 
-- `autodiscover: true` + `autodiscoverFilter: ['boykush/*']` により、GitHub App がインストールされた boykush 配下の全リポジトリを自動的に対象にします。
+- `autodiscover: true` + `autodiscoverFilter` により、GitHub App がインストールされた boykush 配下のリポジトリを自動的に対象にします（`archive-applications` と `scala-multi-project-base` は対象外）。
 - 各リポジトリ固有の設定は、そのリポジトリ内の `renovate.json` で行います（このリポジトリの `config.js` はグローバル設定専用）。
 - まだ Renovate 設定が無いリポジトリには onboarding PR が自動で作成されます。
 

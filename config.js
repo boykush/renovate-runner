@@ -8,9 +8,13 @@
 module.exports = {
   platform: 'github',
 
-  // Run against every repository the GitHub App can access under this owner.
+  // Run against repositories under this owner, except explicit exclusions.
   autodiscover: true,
-  autodiscoverFilter: ['boykush/*'],
+  autodiscoverFilter: [
+    'boykush/*',
+    '!boykush/archive-applications',
+    '!boykush/scala-multi-project-base',
+  ],
 
   // Commit through the GitHub API so commits are attributed to the App and
   // show up as "Verified".
