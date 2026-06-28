@@ -16,6 +16,11 @@ module.exports = {
   // show up as "Verified".
   platformCommit: 'enabled',
 
+  // Hold a new release for a few days before raising an update PR, to reduce
+  // exposure to supply-chain attacks via freshly-published malicious versions.
+  // Applies across every autodiscovered repository.
+  minimumReleaseAge: '3 days',
+
   // Open an onboarding PR on repositories that don't have a Renovate config yet.
   onboarding: true,
   onboardingConfig: {
