@@ -48,6 +48,12 @@ jobs:
           permission-pull-requests: write # open and update pull requests
           permission-issues: write # maintain the dependency dashboard issue
           permission-workflows: write # update pinned action SHAs in workflows
+          # `minimumReleaseAge` (config.js) makes Renovate write a
+          # `renovate/stability-days` commit status on every branch it pushes.
+          # Without this permission the POST /statuses call 403s ("Resource not
+          # accessible by integration") and Renovate aborts the whole repository,
+          # so no update PRs get opened. Keep this whenever minimumReleaseAge is set.
+          permission-statuses: write # set the renovate/stability-days commit status
 
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
