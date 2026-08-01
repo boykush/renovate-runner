@@ -25,6 +25,22 @@ module.exports = {
   // Applies across every autodiscovered repository.
   minimumReleaseAge: '3 days',
 
+  // Automerge, widened one group at a time. First group: GitHub's own actions —
+  // first-party, and one release fans the same bump across every repo at once.
+  // Majors stay manual; `**` also matches sub-path actions (actions/cache/restore).
+  // Where a ruleset requires an approving review the PR still waits for one, since
+  // Renovate can't approve itself — the label is what the approver App keys off.
+  packageRules: [
+    {
+      description: 'Automerge non-major updates to GitHub-authored actions',
+      matchManagers: ['github-actions'],
+      matchPackageNames: ['actions/**'],
+      matchUpdateTypes: ['minor', 'patch', 'digest', 'pinDigest'],
+      automerge: true,
+      addLabels: ['automerge'],
+    },
+  ],
+
   // Open an onboarding PR on repositories that don't have a Renovate config yet.
   onboarding: true,
   onboardingConfig: {
