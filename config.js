@@ -2,7 +2,8 @@
 //
 // This file controls how the runner behaves across ALL repositories.
 // Per-repository settings (package rules, schedules, etc.) belong in each
-// repository's own renovate.json, not here.
+// repository's own renovate.json, not here — unless the rule has to hold even in
+// repos that have no renovate.json.
 //
 // Docs: https://docs.renovatebot.com/self-hosted-configuration/
 module.exports = {
@@ -38,6 +39,17 @@ module.exports = {
       matchUpdateTypes: ['minor', 'patch', 'digest', 'pinDigest'],
       automerge: true,
       addLabels: ['automerge'],
+    },
+    // boykush/github-management fans these files out and rewrites them on every
+    // `terraform apply`, so a bump merged into a copy is reverted — including the
+    // actions/* ones the rule above would automerge. Global because they land in
+    // repos with no renovate.json. Renovate still bumps the real source,
+    // templates/zizmor.yml in github-management; merging there propagates it.
+    {
+      description:
+        'Skip workflows Terraform overwrites; bump github-management/templates instead',
+      matchFileNames: ['.github/workflows/zizmor.yml'],
+      enabled: false,
     },
   ],
 
