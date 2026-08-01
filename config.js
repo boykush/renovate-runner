@@ -2,9 +2,8 @@
 //
 // This file controls how the runner behaves across ALL repositories.
 // Per-repository settings (package rules, schedules, etc.) belong in each
-// repository's own renovate.json, not here — the exception being a rule that
-// must hold everywhere, including in repos that have no renovate.json of their
-// own (see packageRules below).
+// repository's own renovate.json, not here — unless the rule has to hold even in
+// repos that have no renovate.json.
 //
 // Docs: https://docs.renovatebot.com/self-hosted-configuration/
 module.exports = {
@@ -27,23 +26,11 @@ module.exports = {
   // Applies across every autodiscovered repository.
   minimumReleaseAge: '3 days',
 
-  // Workflows that boykush/github-management distributes with Terraform (the
-  // `github_repository_file.zizmor` resource) are overwritten from the template
-  // on the next `terraform apply`. A bump merged into the distributed copy is
-  // therefore a no-op that gets silently reverted, so Renovate must not raise
-  // one anywhere.
-  //
-  // This belongs in the global config rather than in each repository's
-  // renovate.json: the file is fanned out to every owned repo, including ones
-  // with no renovate.json to put the rule in.
-  //
-  // The updates themselves are not lost. Renovate still bumps the source of the
-  // fan-out, templates/zizmor.yml in github-management, which that repo tracks
-  // via a `github-actions.managerFilePatterns` entry (patterns configured there
-  // are added to Renovate's defaults, not swapped for them). Merging that PR and
-  // applying Terraform is what propagates the new version everywhere.
-  //
-  // Add new Terraform-distributed workflows to matchFileNames as they appear.
+  // boykush/github-management fans these files out and rewrites them on every
+  // `terraform apply`, so a bump merged into a copy is silently reverted. Global
+  // because they land in repos with no renovate.json to hold the rule. Renovate
+  // still bumps the source, templates/zizmor.yml in github-management; merging
+  // there and applying is what propagates. Add new distributed workflows here.
   packageRules: [
     {
       description:
