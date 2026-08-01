@@ -78,3 +78,23 @@ jobs:
           LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
           # Empty string is treated as "unset" by Renovate, so scheduled runs are live.
           RENOVATE_DRY_RUN: ${{ inputs.dryRun && 'full' || '' }}
+
+  # Renovate's PRs need an approving review before they can automerge, which it
+  # cannot give itself. Dispatching is a separate job so `actions: write` stays off
+  # the Renovate token. Runs even if Renovate failed, since PRs from earlier runs may
+  # still be waiting, but not on a dry run — approving is a real write, and dry run
+  # promises none.
+  dispatch-approver:
+    needs: renovate
+    if: ${{ !cancelled() && !inputs.dryRun }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write # workflow_dispatch via the API
+    steps:
+      - name: Dispatch Approve bot PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        # GITHUB_TOKEN normally cannot start a workflow, but workflow_dispatch is a
+        # documented exception, so this does not need the App token.
+        run: gh workflow run approve-bot-prs.yml --repo "$REPO"
