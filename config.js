@@ -26,12 +26,25 @@ module.exports = {
   // Applies across every autodiscovered repository.
   minimumReleaseAge: '3 days',
 
-  // boykush/github-management fans these files out and rewrites them on every
-  // `terraform apply`, so a bump merged into a copy is silently reverted. Global
-  // because they land in repos with no renovate.json to hold the rule. Renovate
-  // still bumps the source, templates/zizmor.yml in github-management; merging
-  // there and applying is what propagates. Add new distributed workflows here.
+  // Automerge, widened one group at a time. First group: GitHub's own actions —
+  // first-party, and one release fans the same bump across every repo at once.
+  // Majors stay manual; `**` also matches sub-path actions (actions/cache/restore).
+  // Where a ruleset requires an approving review the PR still waits for one, since
+  // Renovate can't approve itself — the label is what the approver App keys off.
   packageRules: [
+    {
+      description: 'Automerge non-major updates to GitHub-authored actions',
+      matchManagers: ['github-actions'],
+      matchPackageNames: ['actions/**'],
+      matchUpdateTypes: ['minor', 'patch', 'digest', 'pinDigest'],
+      automerge: true,
+      addLabels: ['automerge'],
+    },
+    // boykush/github-management fans these files out and rewrites them on every
+    // `terraform apply`, so a bump merged into a copy is reverted — including the
+    // actions/* ones the rule above would automerge. Global because they land in
+    // repos with no renovate.json. Renovate still bumps the real source,
+    // templates/zizmor.yml in github-management; merging there propagates it.
     {
       description:
         'Skip workflows Terraform overwrites; bump github-management/templates instead',
