@@ -40,6 +40,17 @@ module.exports = {
       automerge: true,
       addLabels: ['automerge'],
     },
+    // Named one by one, not widened to `**`; add an action once its cadence earns it.
+    // Both are SHA-pinned and CI-only, so the workflow a bad bump breaks is the same
+    // one gating its merge.
+    {
+      description: 'Automerge non-major updates to high-cadence third-party actions',
+      matchManagers: ['github-actions'],
+      matchPackageNames: ['jdx/mise-action', 'anthropics/claude-code-action'],
+      matchUpdateTypes: ['minor', 'patch', 'digest', 'pinDigest'],
+      automerge: true,
+      addLabels: ['automerge'],
+    },
     // boykush/github-management fans these files out and rewrites them on every
     // `terraform apply`, so a bump merged into a copy is reverted — including the
     // actions/* ones the rule above would automerge. Global because they land in
