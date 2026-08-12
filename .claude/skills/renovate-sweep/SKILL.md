@@ -60,86 +60,17 @@ done
 
 ## 4. 詰まっている PR の原因切り分け
 
-過去に踏んだものです。上から順に疑ってください。
+緑にならない PR、あるいは **CI が「赤い」のではなく「走っていない」** PR に当たったら [known-issues.md](known-issues.md) を読んでください。過去に踏んだ原因と検出・対処コマンドをまとめてあります。
 
-### workflow run が `action_required` で駐車している
-
-PR branch へ auto-commit する workflow（`mise lock` など）が GITHUB_TOKEN で push すると、後続 run が起動しない or 承認待ちで止まり、**head SHA に check run が付きません**。required check が付いている repo ではこれで永久にマージ不能になります。`gh pr checks` に何も出ないのに CI があるはずの repo は、これを疑ってください。
-
-```sh
-sha=$(gh pr view <n> --repo boykush/<repo> --json headRefOid --jq .headRefOid)
-gh api "repos/boykush/<repo>/actions/runs?head_sha=$sha" \
-  --jq '.workflow_runs[] | select(.conclusion=="action_required") | .id'
-```
-
-出た run id を承認すると走ります。
-
-```sh
-gh api -X POST repos/boykush/<repo>/actions/runs/<run_id>/approve
-```
-
-これは対症療法です。恒久対応は auto-commit の push を App token にすること（CI App は既に ruleset の bypass actor）。**automerge を有効にしている repo でこれが起きると automerge ごと死にます**ので、見つけたら報告してください。
-
-### mise.toml だけ上がって mise.lock が古い
-
-CI が `<tool>@<version> is not in the lockfile` で落ちます。`mise lock` workflow を持たない repo（github-management など）で起きます。branch を main に rebase してから relock し、force push します。platform 集合は repo の CLAUDE.md に従ってください。
-
-```sh
-mise lock -p linux-x64,linux-arm64,macos-arm64,macos-x64
-```
-
-### CI が古すぎて再実行できない
-
-1か月以上前の run は `gh api -X POST .../rerun` が `Unable to retry this workflow run because it was created over a month ago` を返します。空コミットを push して再走させます。
-
-```sh
-git commit --allow-empty -m "Retrigger CI"
-```
-
-Renovate の onboarding PR で close & reopen は使わないこと。閉じた瞬間に onboarding 拒否と解釈される可能性があります。
-
-### repo 自身の workflow が SHA pin されていない
-
-`github-management` の `sha_pinning.tf` が全 repo に SHA pin を強制しているため、未 pin の workflow を持つ repo は **action の解決段階で全 PR が落ちます**。テストが壊れているのではなく起動していないので、`sbt test` などの本体を疑う前にここを見てください。Renovate PR ではなく repo 側を直す PR を先に出します。直すと Renovate が「解決済み」として当該バージョンの PR を自動 close することがあります。
+いずれも PR ページを見るだけでは分かりません。特に `gh pr checks` に `renovate/stability-days` しか出ない repo は、CI が無いのではなく run が駐車している可能性が高いです。
 
 ## 5. automerge の検討（このスキルの完了条件）
 
 一巡した後、**手でマージしたものの中に automerge へ回せる更新が無いか**を必ず検討します。検討だけで終わらせず、変更があれば PR を出すところまでがこのスキルの完了条件です。無ければ「無し」と明示して終わります。
 
-### 仕組み
+判断材料は [automerge.md](automerge.md) にあります。置き場所の決め方（横断は `config.js`、エコシステム固有は各 repo の renovate.json）、広げる前に満たすべき条件、debug 実行での効果確認までまとめてあります。
 
-`config.js` の packageRule が `automerge: true` と `addLabels: ["automerge"]` を付ける → `approve-bot-prs.yml` が `automerge` ラベルの付いた Renovate PR を承認 App で approve → Renovate 自身が `PUT /pulls/{n}/merge` でマージ、という流れです。
-
-**`automerge` と `addLabels` は必ず対で書きます。** public repo は承認1件必須で Renovate は自分の PR を承認できません。ラベルが無いと承認 App が拾えず、automerge が永久に待ち続けます。
-
-`allow_auto_merge`（GitHub 側の auto-merge）は使いません。有効にすると bypass コントロールが UI から消えるためです（github-management の CLAUDE.md 参照）。Renovate 自前の automerge はブランチ全体の status を待つので、こちらのほうが厳しい gate です。
-
-### 置き場所の決め方
-
-`config.js` のヘッダに「per-repository settings は各リポジトリの renovate.json へ」と書いてある通りに従います。
-
-- **全 repo 横断のもの → `config.js`**。GitHub Actions の更新は 1 リリースが全 repo に波及するのでこちら。既存の `actions/**` ルールがこれです。
-- **特定 repo / エコシステム固有のもの → その repo の `renovate.json`**。cargo を全体に書いても Rust repo 以外では死に設定になります。dotfiles が mise ルールを自前の `renovate.json` に置いているのが前例です。
-
-repo 側の config は場所が揺れます。先に実在を確認してください（scraps は `.github/renovate.json`、dotfiles は root の `renovate.json`）。
-
-### 広げる前に満たすべき条件
-
-1. その repo の required check が、PR で走る CI を実質的に覆っていること。required check が無い repo に automerge を付けると無検査でマージされます。
-2. 4 の「auto-commit で check が付かない」問題を抱えていないこと。抱えたまま広げるとラベルだけ付いて止まる PR が増えます。
-3. major を含めないこと。実績として major は壊れます（tera v2、skunk 0.6.5 など）。`matchUpdateTypes` は `minor` / `patch` / `digest` / `pinDigest` に限定します。
-
-### 効果の確認
-
-Renovate を手動実行し、debug ログで判定を見ます。
-
-```sh
-gh workflow run renovate.yml --repo boykush/renovate-runner -f logLevel=debug
-```
-
-`PR automerged` / `PR is not configured for automerge` / `Branch status green` が該当 branch に対して出ているかを確認します。INFO レベルでは automerge の判定が一切出ないので、切り分けには debug が要ります。
-
-ルールの効き方だけ先に見たいときは `-f dryRun=true` を併用します。branch も PR も作らずに判定だけログに出ます。
+ひとつだけ手順側にも書いておきます。`automerge: true` と `addLabels: ["automerge"]` は**必ず対**です。ラベルが無いと承認 App が拾わず、automerge が永久に待ち続けます。
 
 # 報告
 
