@@ -20,14 +20,20 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 
 ## 認証
 
-横断実行には GitHub App が必要で、ワークフローは以下の Variables / Secrets を参照します。App 本体・権限・払い出しは `boykush/github-management` で管理されます。
+GitHub App を 2 つ使います。横断実行を担う **Renovate App** と、その PR に approve を付けるだけの **承認用 App** です。ワークフローは以下の Variables / Secrets を参照します。App 本体・権限・払い出しは、いずれも `boykush/github-management` で管理されます。
 
 | 種別 | 名前 | 用途 |
 | --- | --- | --- |
-| Variable | `RENOVATE_APP_ID` | GitHub App の App ID（公開識別子） |
-| Secret | `RENOVATE_APP_PRIVATE_KEY` | GitHub App の秘密鍵（`.pem` 全文） |
+| Variable | `RENOVATE_APP_CLIENT_ID` | Renovate App の Client ID（公開識別子） |
+| Secret | `RENOVATE_APP_PRIVATE_KEY` | Renovate App の秘密鍵（`.pem` 全文） |
+| Variable | `RENOVATE_APPROVE_APP_CLIENT_ID` | 承認用 App の Client ID（公開識別子） |
+| Secret | `RENOVATE_APPROVE_APP_PRIVATE_KEY` | 承認用 App の秘密鍵（`.pem` 全文） |
 
-App に必要な権限: Contents / Pull requests / Issues / Workflows（いずれも Read and write）。
+`actions/create-github-app-token` の `app-id` は deprecated のため、数値の App ID ではなく Client ID（`Iv23li…`）を渡します。
+
+**Renovate App** の権限: Contents / Pull requests / Issues / Workflows / Commit statuses（いずれも Read and write）。Commit statuses は `minimumReleaseAge` が各ブランチに付ける `renovate/stability-days` ステータスの書き込みに使います。
+
+**承認用 App** の権限: Pull requests（Read and write）のみ。public repo は approve 1 件を必須とし、GitHub は PR の作成者自身による approve を認めないため、Renovate は自分の PR のゲートを自力で通せません。`.github/workflows/approve-bot-prs.yml` がこの App で approve を付け、要件を回避せずに満たします。
 
 ## 実行
 
