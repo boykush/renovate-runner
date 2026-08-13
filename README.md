@@ -9,8 +9,10 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 | ファイル | 役割 |
 | --- | --- |
 | `.github/workflows/renovate.yml` | 4 時間ごと（+ 手動）に Renovate を起動する GitHub Actions ワークフロー |
+| `.github/workflows/approve-bot-prs.yml` | `automerge` ラベルの付いた Renovate PR を承認 App でレビュー承認する（Renovate は自分の PR を承認できないため） |
 | `config.js` | セルフホスト用のグローバル設定（autodiscover / onboarding など）。**全リポジトリ共通**の挙動を定義 |
 | `renovate.json` | この `renovate-runner` リポジトリ自身の依存設定（onboarding 済み扱い） |
+| `.claude/skills/renovate-sweep/` | Renovate PR を横断で棚卸し・マージし、automerge 拡大まで検討する Claude Code スキル（ローカルの `gh` 権限で実行） |
 
 - `autodiscover: true` + `autodiscoverFilter` により、GitHub App がインストールされた boykush 配下のリポジトリを自動的に対象にします（`archive-applications` と `scala-multi-project-base` は対象外）。
 - 各リポジトリ固有の設定は、そのリポジトリ内の `renovate.json` で行います（このリポジトリの `config.js` はグローバル設定専用）。
