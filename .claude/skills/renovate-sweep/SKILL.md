@@ -29,9 +29,11 @@ gh api -X GET search/repositories --paginate \
 
 ```sh
 gh pr list --repo boykush/<repo> --state open --limit 50 \
-  --json number,title,author,mergeable,mergeStateStatus,statusCheckRollup \
+  --json number,title,author,mergeable,mergeStateStatus,statusCheckRollup,url \
   --jq '.[] | select(.author.login=="app/boykush-renovate-app")'
 ```
+
+`url` も取っておいてください。最後の報告でマージできなかった PR にリンクを貼るのに使います。
 
 ## 2. 状態の読み方
 
@@ -72,11 +74,15 @@ done
 
 ひとつだけ手順側にも書いておきます。`automerge: true` と `addLabels: ["automerge"]` は**必ず対**です。ラベルが無いと承認 App が拾わず、automerge が永久に待ち続けます。
 
+PR を出す repo の言語に合わせてください。config の `description`・commit message・PR 本文の全てが対象です。owner 配下で統一されていません（scraps は英語、dotfiles は日本語）。既存の PR 本文を1件読んでから書き始めるのが確実です。
+
 # 報告
 
 最後に以下を報告します。
 
 - マージした PR（repo ごと）
-- 残した PR と、その理由（実作業が必要なもの / rebase 待ち / scope 不足）
+- **マージできなかった PR を、1件ずつリンク付きで**。理由（実作業が必要 / rebase 待ち / stability-days 待ち / scope 不足）を添えて、repo ごとにまとめます
 - 詰まりの原因として見つかった構造的な問題があれば、対症療法と恒久対応を分けて
 - automerge 検討の結論と、出した PR
+
+**残した PR は必ずリンクにします。** 続きを手で触るのはこのリストからで、`#12` のような番号だけでは repo をまたいだ時に辿れません。手順1で取った `url` をそのまま使ってください。件数が多くても省略や「他N件」で畳まないこと。マージした側は件数が多くなりがちなので、番号の羅列で構いません。
