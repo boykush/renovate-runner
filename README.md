@@ -11,12 +11,17 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 | `.github/workflows/renovate.yml` | 4 時間ごと（+ 手動）に Renovate を起動する GitHub Actions ワークフロー |
 | `.github/workflows/approve-bot-prs.yml` | `automerge` ラベルの付いた Renovate PR を承認 App でレビュー承認する（Renovate は自分の PR を承認できないため） |
 | `config.js` | セルフホスト用のグローバル設定（autodiscover / onboarding など）。**全リポジトリ共通**の挙動を定義 |
+| `mise.toml` / `mise.lock` | Renovate の post-upgrade task が使う apm の版とチェックサム |
 | `renovate.json` | この `renovate-runner` リポジトリ自身の依存設定（onboarding 済み扱い） |
 | `.claude/skills/renovate-sweep/` | Renovate PR を横断で棚卸し・マージし、automerge 拡大まで検討する Claude Code スキル（ローカルの `gh` 権限で実行） |
 
 - `autodiscover: true` + `autodiscoverFilter` により、GitHub App がインストールされた boykush 配下のリポジトリを自動的に対象にします。
 - 各リポジトリ固有の設定は、そのリポジトリ内の `renovate.json` で行います（このリポジトリの `config.js` はグローバル設定専用）。
 - Renovate に manager が無い `apm.yml`（[microsoft/apm](https://github.com/microsoft/apm)）の依存は `config.js` の `customManagers` が拾います。file format の解釈であってリポジトリごとの方針ではなく、`renovate.json` を持たないリポジトリにも効かせる必要があるためグローバルに置いています（`customManagers` は mergeable なので、リポジトリ側の定義とは足し算になります）。
+- apm の依存を上げる PR では、同じ commit で `apm install` し直し、`apm.lock.yaml` と `.mcp.json` / `.codex/config.toml` を追従させます（`config.js` の `postUpgradeTasks`）。Renovate が書き換えるのは `apm.yml` の SHA だけで、そのままだと lock と生成物が古いまま残るためです。
+  - 対象はリポジトリ直下の `apm.yml` だけです（dotfiles の `apm/apm.yml` は user scope 向けで、生成物を repo に持ちません）。
+  - apm は `env -i` で空の環境から起動します。Renovate は post-upgrade task に token 入りの git 設定を渡しますが、apm はそれがあると clone を拒否します。ai-plugins は public なので token は要らず、apm に token を見せずに済みます。
+  - apm は `mise.toml` で版を、`mise.lock` でチェックサムを固定し、workflow が Renovate のコンテナから見える `/tmp/renovate-tools/apm` に置きます。apm の版を上げたら `mise lock -p linux-x64,linux-arm64,macos-arm64,macos-x64` で `mise.lock` も作り直します。
 - まだ Renovate 設定が無いリポジトリには onboarding PR が自動で作成されます。
 
 ## 認証

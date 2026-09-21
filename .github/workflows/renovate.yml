@@ -58,9 +58,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Only config.js is needed here; Renovate uses the App token for all git
-          # operations, so the checkout's git credential should not be persisted.
+          # Only config.js and the mise pins are needed here; Renovate uses the App token
+          # for all git operations, so the checkout's git credential should not be persisted.
           persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+
+      # The Renovate step runs in a container that sees only this runner's /tmp (the
+      # action's docker-volumes default). apm ships as a directory, not a single binary,
+      # so the whole install goes there, at the path config.js allows.
+      - name: Stage apm for post-upgrade tasks
+        run: |
+          mkdir -p /tmp/renovate-tools
+          cp -R "$(dirname "$(mise which apm)")" /tmp/renovate-tools/apm
 
       - name: Self-hosted Renovate
         uses: renovatebot/github-action@dcfba84a42d1b5d5e49bf131b1bf53511851a123 # v46.3.1
