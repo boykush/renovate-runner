@@ -74,6 +74,19 @@ module.exports = {
         executionMode: 'branch',
       },
     },
+    // boykush 自身が出したものは待たない。minimumReleaseAge は第三者が公開した直後の悪性版を
+    // 避けるためのもの。git-refs の digest（apm.yml の ai-plugins）は公開日時を持たないので、
+    // 待たせると stability-days が pending のまま残り続ける。
+    {
+      description: "Don't hold back boykush's own releases",
+      matchPackageNames: [
+        'boykush/**',
+        'https://github.com/boykush/**',
+        'github.com/boykush/**',
+        'ghcr.io/boykush/**',
+      ],
+      minimumReleaseAge: null,
+    },
   ],
 
   // apm (microsoft/apm) の依存は Renovate に manager が無いので regex で拾う。file format の
