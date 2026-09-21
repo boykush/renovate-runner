@@ -9,11 +9,10 @@
 module.exports = {
   platform: 'github',
 
-  // Run against repositories under this owner, except explicit exclusions.
+  // Run against every repository under this owner.
   autodiscover: true,
   autodiscoverFilter: [
     'boykush/*',
-    '!boykush/scala-multi-project-base',
   ],
 
   // Commit through the GitHub API so commits are attributed to the App and
