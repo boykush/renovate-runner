@@ -64,6 +64,25 @@ module.exports = {
     },
   ],
 
+  // apm (microsoft/apm) の依存は Renovate に manager が無いので regex で拾う。file format の
+  // 解釈であって repo ごとの方針ではなく、renovate.json を持たない repo（adr など）にも効かせたい
+  // ためグローバルに置く。customManagers は mergeable なので repo 側の定義とは足し算になる。
+  // 素の SHA を pin して main の HEAD を digest 更新で追う（tag は打たない運用）。
+  customManagers: [
+    {
+      customType: 'regex',
+      description: 'Track the HEAD of boykush/ai-plugins for SHA-pinned apm dependencies',
+      managerFilePatterns: ['/(^|/)apm\\.yml$/'],
+      matchStrings: [
+        'boykush/ai-plugins/plugins/[^#\\s]+#(?<currentDigest>[0-9a-f]{40})',
+      ],
+      currentValueTemplate: 'main',
+      depNameTemplate: 'boykush/ai-plugins',
+      packageNameTemplate: 'https://github.com/boykush/ai-plugins',
+      datasourceTemplate: 'git-refs',
+    },
+  ],
+
   // Open an onboarding PR on repositories that don't have a Renovate config yet.
   onboarding: true,
   onboardingConfig: {
