@@ -60,6 +60,20 @@ module.exports = {
       matchFileNames: ['.github/workflows/zizmor.yml'],
       enabled: false,
     },
+    // apm.yml の SHA だけ上げると、commit 済みの apm.lock.yaml と生成物が古いまま残る。bump と
+    // 同じ commit で apm install し直す。env -i は、Renovate が渡す token 入りの git 設定を apm に
+    // 見せないため（apm はその設定があると clone を拒否する。ai-plugins は public で token は不要）。
+    // dotfiles の apm/apm.yml は user scope 向けで生成物を repo に持たないので、直下に絞る。
+    {
+      description: 'Regenerate what apm install derives from apm.yml in the same commit as the bump',
+      matchDepNames: ['boykush/ai-plugins'],
+      matchFileNames: ['apm.yml'],
+      postUpgradeTasks: {
+        commands: ['env -i HOME=/home/ubuntu PATH=/usr/bin:/bin /tmp/renovate-tools/apm/apm install'],
+        fileFilters: ['.mcp.json', '.codex/config.toml', 'apm.lock.yaml'],
+        executionMode: 'branch',
+      },
+    },
   ],
 
   // apm (microsoft/apm) の依存は Renovate に manager が無いので regex で拾う。file format の
@@ -79,6 +93,13 @@ module.exports = {
       packageNameTemplate: 'https://github.com/boykush/ai-plugins',
       datasourceTemplate: 'git-refs',
     },
+  ],
+
+  // postUpgradeTasks で走らせてよいコマンド。シェルを通さない既定のまま、完全一致で許す。
+  // apm は .github/workflows/renovate.yml が、Renovate のコンテナから見える /tmp に置いたもの。
+  // HOME と PATH はコンテナ（Renovate の image）の値。
+  allowedCommands: [
+    '^env -i HOME=/home/ubuntu PATH=/usr/bin:/bin /tmp/renovate-tools/apm/apm install$',
   ],
 
   // Open an onboarding PR on repositories that don't have a Renovate config yet.

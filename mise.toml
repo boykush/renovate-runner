@@ -1,0 +1,10 @@
+# Tools pinned with mise. CI installs these via jdx/mise-action.
+[tools]
+# Runs inside Renovate's post-upgrade tasks (config.js). Keep it at the version the
+# consumers' apm.lock.yaml were generated with, or each bump also rewrites apm_version.
+"github:microsoft/apm" = "0.31.0"
+
+[settings]
+# Record exact versions + checksums in mise.lock (committed): this binary runs next to
+# Renovate's owner-wide token.
+lockfile = true
