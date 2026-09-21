@@ -16,6 +16,7 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 
 - `autodiscover: true` + `autodiscoverFilter` により、GitHub App がインストールされた boykush 配下のリポジトリを自動的に対象にします（`archive-applications` と `scala-multi-project-base` は対象外）。
 - 各リポジトリ固有の設定は、そのリポジトリ内の `renovate.json` で行います（このリポジトリの `config.js` はグローバル設定専用）。
+- Renovate に manager が無い `apm.yml`（[microsoft/apm](https://github.com/microsoft/apm)）の依存は `config.js` の `customManagers` が拾います。file format の解釈であってリポジトリごとの方針ではなく、`renovate.json` を持たないリポジトリにも効かせる必要があるためグローバルに置いています（`customManagers` は mergeable なので、リポジトリ側の定義とは足し算になります）。
 - まだ Renovate 設定が無いリポジトリには onboarding PR が自動で作成されます。
 
 ## 認証
