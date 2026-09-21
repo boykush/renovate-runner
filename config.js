@@ -13,7 +13,6 @@ module.exports = {
   autodiscover: true,
   autodiscoverFilter: [
     'boykush/*',
-    '!boykush/archive-applications',
     '!boykush/scala-multi-project-base',
   ],
 
