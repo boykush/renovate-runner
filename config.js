@@ -62,11 +62,11 @@ module.exports = {
     },
     // apm.yml の SHA だけ上げると、commit 済みの apm.lock.yaml と生成物が古いまま残る。bump と
     // 同じ commit で apm install し直す。env -i は、Renovate が渡す token 入りの git 設定を apm に
-    // 見せないため（apm はその設定があると clone を拒否する。ai-plugins は public で token は不要）。
+    // 見せないため（apm はその設定があると clone を拒否する。拾う package は public で token は不要）。
     // dotfiles の apm/apm.yml は user scope 向けで生成物を repo に持たないので、直下に絞る。
     {
       description: 'Regenerate what apm install derives from apm.yml in the same commit as the bump',
-      matchDepNames: ['boykush/ai-plugins'],
+      matchManagers: ['custom.regex'],
       matchFileNames: ['apm.yml'],
       postUpgradeTasks: {
         commands: ['env -i HOME=/home/ubuntu PATH=/usr/bin:/bin /tmp/renovate-tools/apm/apm install'],
@@ -75,8 +75,8 @@ module.exports = {
       },
     },
     // boykush 自身が出したものは待たない。minimumReleaseAge は第三者が公開した直後の悪性版を
-    // 避けるためのもの。git-refs の digest（apm.yml の ai-plugins）は公開日時を持たないので、
-    // 待たせると stability-days が pending のまま残り続ける。
+    // 避けるためのもの。apm の依存で自前と第三者を分けているのはこの rule で、customManager は
+    // 両方を1本で拾う（packageName は depName と同じ boykush/ai-plugins なので ** で当たる）。
     {
       description: "Don't hold back boykush's own releases",
       matchPackageNames: [
@@ -93,18 +93,22 @@ module.exports = {
   // 解釈であって repo ごとの方針ではなく、renovate.json を持たない repo（adr など）にも効かせたい
   // ためグローバルに置く。customManagers は mergeable なので repo 側の定義とは足し算になる。
   // 素の SHA を pin して main の HEAD を digest 更新で追う（tag は打たない運用）。
+  // 自前と第三者で manager を割らないのは、RE2 に否定先読みが無く「ai-plugins 以外」を書けないため。
+  // vendor 列挙にすると書き漏らした先が黙って追従対象から外れる。
   customManagers: [
     {
       customType: 'regex',
-      description: 'Track the HEAD of boykush/ai-plugins for SHA-pinned apm dependencies',
+      description: 'Track the HEAD of SHA-pinned apm dependencies',
       managerFilePatterns: ['/(^|/)apm\\.yml$/'],
+      // owner/repo を depName に取る。以降の subpath は package の位置なので依存の同一性に入れない。
       matchStrings: [
-        'boykush/ai-plugins/plugins/[^#\\s]+#(?<currentDigest>[0-9a-f]{40})',
+        '(?<depName>[\\w.-]+/[\\w.-]+)(?:/[^#\\s]+)?#(?<currentDigest>[0-9a-f]{40})',
       ],
       currentValueTemplate: 'main',
-      depNameTemplate: 'boykush/ai-plugins',
-      packageNameTemplate: 'https://github.com/boykush/ai-plugins',
-      datasourceTemplate: 'git-refs',
+      // github-digest は commit date を releaseTimestamp として返すので、第三者に minimumReleaseAge
+      // が効く。git-refs は日時を持たず、既定の minimumReleaseAgeBehaviour=timestamp-required では
+      // PR が pending のまま止まる。自前は上の rule で免除しているのでどちらでも動く。
+      datasourceTemplate: 'github-digest',
     },
   ],
 
