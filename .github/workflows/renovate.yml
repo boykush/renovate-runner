@@ -30,13 +30,21 @@ permissions:
 jobs:
   renovate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout
+      id-token: write # assume the signing role, see below
     steps:
+      # The App's private key is in AWS KMS and cannot be read back out; this
+      # action assumes the role with the run's OIDC token and has KMS sign the
+      # App's JWT. The credentials stay inside the action, and the only thing
+      # the role can do with the key is produce that one signature.
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: suzuki-shunsuke/create-github-app-token-aws-kms@b4a29a5f1cd6ea2b633d6ee6d9806dbce26493cf # v0.0.3
         with:
           client-id: ${{ vars.RENOVATE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+          kms-key-id: arn:aws:kms:ap-northeast-1:509266991346:alias/github-app-renovate
+          role-to-assume: arn:aws:iam::509266991346:role/github-actions-github-app-renovate
           # Renovate autodiscovers every boykush/* repository, so the token must
           # stay owner-wide. This single "all repositories" finding is knowingly
           # accepted: pinning to a repositories: list would defeat autodiscovery
