@@ -18,8 +18,9 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 - `autodiscover: true` + `autodiscoverFilter` により、GitHub App がインストールされた boykush 配下のリポジトリを自動的に対象にします。
 - 各リポジトリ固有の設定は、そのリポジトリ内の `renovate.json` で行います（このリポジトリの `config.js` はグローバル設定専用）。
 - Renovate に manager が無い `apm.yml`（[microsoft/apm](https://github.com/microsoft/apm)）の依存は `config.js` の `customManagers` が拾います。file format の解釈であってリポジトリごとの方針ではなく、`renovate.json` を持たないリポジトリにも効かせる必要があるためグローバルに置いています（`customManagers` は mergeable なので、リポジトリ側の定義とは足し算になります）。
-- apm の依存を上げる PR では、同じ commit で `apm install` し直し、`apm.lock.yaml` と `.mcp.json` / `.codex/config.toml` を追従させます（`config.js` の `postUpgradeTasks`）。Renovate が書き換えるのは `apm.yml` の SHA だけで、そのままだと lock と生成物が古いまま残るためです。
+- apm の依存を上げる PR では、同じ commit で `apm install` し直し、`apm.lock.yaml` と生成物（`.mcp.json` と、`.claude/` / `.codex/` / `.agents/` 配下）を追従させます（`config.js` の `postUpgradeTasks`）。Renovate が書き換えるのは `apm.yml` の SHA だけで、そのままだと lock と生成物が古いまま残るためです。
   - 対象はリポジトリ直下の `apm.yml` だけです（dotfiles の `apm/apm.yml` は user scope 向けで、生成物を repo に持ちません）。
+  - commit に載せる範囲（`fileFilters`）は、targets（claude / codex）の展開先を root ごと指定しています。skill や hook を1つずつ挙げると、書き漏らした先が lock にだけ載って commit から落ちるためです。consumer の `apm.yml` に targets を足すときは、その target の root も `fileFilters` に足します。
   - apm は `env -i` で空の環境から起動します。Renovate は post-upgrade task に token 入りの git 設定を渡しますが、apm はそれがあると clone を拒否します。ai-plugins は public なので token は要らず、apm に token を見せずに済みます。
   - apm は `mise.toml` で版を、`mise.lock` でチェックサムを固定し、workflow が Renovate のコンテナから見える `/tmp/renovate-tools/apm` に置きます。apm の版を上げたら `mise lock -p linux-x64,linux-arm64,macos-arm64,macos-x64` で `mise.lock` も作り直します。
 - まだ Renovate 設定が無いリポジトリには onboarding PR が自動で作成されます。
