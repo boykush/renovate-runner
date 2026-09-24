@@ -4,7 +4,7 @@ SKILL.md の手順 5 から参照されます。automerge に回せる候補が�
 
 ## 仕組み
 
-packageRule が `automerge: true` と `addLabels: ["automerge"]` を付ける → `approve-bot-prs.yml` が `automerge` ラベルの付いた Renovate PR を承認 App（`boykush-pr-approver`）で approve → Renovate 自身が `PUT /pulls/{n}/merge` でマージ、という流れです。
+packageRule が `automerge: true` と `addLabels: ["automerge"]` を付ける → `renovate.yml` の `approve` job が `automerge` ラベルの付いた Renovate PR を承認 App（`boykush-pr-approver`）で approve → Renovate 自身が `PUT /pulls/{n}/merge` でマージ、という流れです。
 
 **`automerge` と `addLabels` は必ず対で書きます。** public repo は承認1件必須で、Renovate は自分の PR を承認できません。ラベルが無いと承認 App が対象を絞れず拾わないため、automerge が永久に待ち続けます。
 

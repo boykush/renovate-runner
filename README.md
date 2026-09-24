@@ -8,8 +8,7 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 
 | ファイル | 役割 |
 | --- | --- |
-| `.github/workflows/renovate.yml` | 4 時間ごと（+ 手動）に Renovate を起動する GitHub Actions ワークフロー |
-| `.github/workflows/approve-bot-prs.yml` | `automerge` ラベルの付いた Renovate PR を承認 App でレビュー承認する（Renovate は自分の PR を承認できないため） |
+| `.github/workflows/renovate.yml` | 4時間ごとに self-hosted Renovate を実行し、続けて `automerge` ラベルの付いた PR を承認 App でレビュー承認する。App token はどちらも AWS KMS の署名で作る |
 | `config.js` | セルフホスト用のグローバル設定（autodiscover / onboarding など）。**全リポジトリ共通**の挙動を定義 |
 | `mise.toml` / `mise.lock` | Renovate の post-upgrade task が使う apm の版とチェックサム |
 | `renovate.json` | この `renovate-runner` リポジトリ自身の依存設定（onboarding 済み扱い） |
@@ -42,7 +41,7 @@ GitHub App を 2 つ使います。横断実行を担う **Renovate App** と、
 
 **Renovate App** の権限: Contents / Pull requests / Issues / Workflows / Commit statuses（いずれも Read and write）。Commit statuses は `minimumReleaseAge` が各ブランチに付ける `renovate/stability-days` ステータスの書き込みに使います。
 
-**承認用 App** の権限: Pull requests（Read and write）のみ。public repo は approve 1 件を必須とし、GitHub は PR の作成者自身による approve を認めないため、Renovate は自分の PR のゲートを自力で通せません。`.github/workflows/approve-bot-prs.yml` がこの App で approve を付け、要件を回避せずに満たします。
+**承認用 App** の権限: Pull requests（Read and write）のみ。public repo は approve 1 件を必須とし、GitHub は PR の作成者自身による approve を認めないため、Renovate は自分の PR のゲートを自力で通せません。`renovate.yml` の `approve` job がこの App で approve を付け、要件を回避せずに満たします。
 
 ## 実行
 
