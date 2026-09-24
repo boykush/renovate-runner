@@ -1,0 +1,2 @@
+# apm install unpacks dependencies here; the files it generates (.mcp.json etc.) are committed
+apm_modules/
