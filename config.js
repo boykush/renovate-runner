@@ -80,6 +80,18 @@ module.exports = {
         executionMode: 'branch',
       },
     },
+    // ai-plugins は自前で、main の1 commit が apm.yml を持つ全 repo に同じ digest bump の PR を開く。
+    // 中身は agent 向けの設定で CI では確かめようがなく、gate は上の rule の apm install が担う:
+    // 失敗すると renovate/artifacts が赤で残り、automerge しない。dotfiles の apm/apm.yml はそこを
+    // 通らないが、user scope に反映されるのは手で apm:apply したときだけ。
+    {
+      description: 'Automerge digest updates to boykush/ai-plugins',
+      matchManagers: ['custom.regex'],
+      matchPackageNames: ['boykush/ai-plugins'],
+      matchUpdateTypes: ['digest'],
+      automerge: true,
+      addLabels: ['automerge'],
+    },
     // boykush 自身が出したものは待たない。minimumReleaseAge は第三者が公開した直後の悪性版を
     // 避けるためのもの。apm の依存で自前と第三者を分けているのはこの rule で、customManager は
     // 両方を1本で拾う（packageName は depName と同じ boykush/ai-plugins なので ** で当たる）。
