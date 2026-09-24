@@ -87,14 +87,23 @@ module.exports = {
     {
       description: 'Automerge digest updates to boykush/ai-plugins',
       matchManagers: ['custom.regex'],
-      matchPackageNames: ['boykush/ai-plugins'],
+      // packageName は git-refs に渡す URL なので、owner/repo の depName で当てる。
+      matchDepNames: ['boykush/ai-plugins'],
       matchUpdateTypes: ['digest'],
       automerge: true,
       addLabels: ['automerge'],
     },
+    // apm の依存は第三者のものも待たせない。Renovate は digest だけの更新に日時を渡さないので、
+    // minimumReleaseAge を掛けても待つことにはならず、PR はすぐ開いて renovate/stability-days が
+    // pending のまま残るだけになる。
+    {
+      description: "Don't hold back apm dependencies",
+      matchManagers: ['custom.regex'],
+      matchFileNames: ['/(^|/)apm\\.yml$/'],
+      minimumReleaseAge: null,
+    },
     // boykush 自身が出したものは待たない。minimumReleaseAge は第三者が公開した直後の悪性版を
-    // 避けるためのもの。apm の依存で自前と第三者を分けているのはこの rule で、customManager は
-    // 両方を1本で拾う（packageName は depName と同じ boykush/ai-plugins なので ** で当たる）。
+    // 避けるためのもの。
     {
       description: "Don't hold back boykush's own releases",
       matchPackageNames: [
@@ -123,10 +132,11 @@ module.exports = {
         '(?<depName>[\\w.-]+/[\\w.-]+)(?:/[^#\\s]+)?#(?<currentDigest>[0-9a-f]{40})',
       ],
       currentValueTemplate: 'main',
-      // github-digest は commit date を releaseTimestamp として返すので、第三者に minimumReleaseAge
-      // が効く。git-refs は日時を持たず、既定の minimumReleaseAgeBehaviour=timestamp-required では
-      // PR が pending のまま止まる。自前は上の rule で免除しているのでどちらでも動く。
-      datasourceTemplate: 'github-digest',
+      // git-refs は git ls-remote で全 ref を読むので、branch がいくつあっても main を引ける。
+      // github-digest は branch を名前順に 300 件までしか読まず、それより後ろに main が来る repo
+      // （claude-plugins-official など）では digest が引けない。
+      packageNameTemplate: 'https://github.com/{{depName}}',
+      datasourceTemplate: 'git-refs',
     },
   ],
 

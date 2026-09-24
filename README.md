@@ -17,6 +17,8 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 - `autodiscover: true` + `autodiscoverFilter` により、GitHub App がインストールされた boykush 配下のリポジトリを自動的に対象にします。
 - 各リポジトリ固有の設定は、そのリポジトリ内の `renovate.json` で行います（このリポジトリの `config.js` はグローバル設定専用）。
 - Renovate に manager が無い `apm.yml`（[microsoft/apm](https://github.com/microsoft/apm)）の依存は `config.js` の `customManagers` が拾います。file format の解釈であってリポジトリごとの方針ではなく、`renovate.json` を持たないリポジトリにも効かせる必要があるためグローバルに置いています（`customManagers` は mergeable なので、リポジトリ側の定義とは足し算になります）。
+- apm の依存は SHA で pin され、Renovate が main の HEAD へ上げます。main は `git-refs`（`git ls-remote`）で引きます。組み込みの `github-digest` は branch を名前順に 300 件までしか読まず、branch の多い repo（anthropics/claude-plugins-official など）では main に届かないためです。
+  - 第三者の依存も `minimumReleaseAge` で待たせません。Renovate は digest だけの更新に日時を渡さないので、待たせようとしても PR はすぐ開き、`renovate/stability-days` が pending のまま残るだけになります。
 - apm の依存を上げる PR では、同じ commit で `apm install` し直し、`apm.lock.yaml` と生成物（`.mcp.json` と、`.claude/` / `.codex/` / `.agents/` 配下）を追従させます（`config.js` の `postUpgradeTasks`）。Renovate が書き換えるのは `apm.yml` の SHA だけで、そのままだと lock と生成物が古いまま残るためです。
   - 対象はリポジトリ直下の `apm.yml` だけです（dotfiles の `apm/apm.yml` は user scope 向けで、生成物を repo に持ちません）。
   - commit に載せる範囲（`fileFilters`）は、targets（claude / codex）の展開先を root ごと指定しています。skill や hook を1つずつ挙げると、書き漏らした先が lock にだけ載って commit から落ちるためです。consumer の `apm.yml` に targets を足すときは、その target の root も `fileFilters` に足します。
