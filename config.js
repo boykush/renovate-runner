@@ -52,12 +52,15 @@ module.exports = {
     // boykush/github-management fans these files out and rewrites them on every
     // `terraform apply`, so a bump merged into a copy is reverted — including the
     // actions/* ones the rule above would automerge. Global because they land in
-    // repos with no renovate.json. Renovate still bumps the real source,
-    // templates/zizmor.yml in github-management; merging there propagates it.
+    // repos with no renovate.json. Renovate bumps the real sources under that
+    // repo's templates/ instead, so every file it fans out belongs in the list below.
     {
       description:
         'Skip workflows Terraform overwrites; bump github-management/templates instead',
-      matchFileNames: ['.github/workflows/zizmor.yml'],
+      matchFileNames: [
+        '.github/workflows/zizmor.yml',
+        '.github/workflows/approve-pr.yml',
+      ],
       enabled: false,
     },
     // apm.yml の SHA だけ上げると、commit 済みの apm.lock.yaml と生成物が古いまま残る。bump と
