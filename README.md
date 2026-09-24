@@ -39,7 +39,7 @@ GitHub App を 2 つ使います。横断実行を担う **Renovate App** と、
 
 渡しているのが数値の App ID ではなく Client ID（`Iv23li…`）なのは公式 action に合わせた名残で、この action は両方受け付けます（両方あれば `client-id` が優先）。
 
-**Renovate App** の権限: Contents / Pull requests / Issues / Workflows / Commit statuses（いずれも Read and write）。Commit statuses は `minimumReleaseAge` が各ブランチに付ける `renovate/stability-days` ステータスの書き込みに使います。
+**Renovate App** の権限: Contents / Pull requests / Issues / Workflows / Commit statuses（いずれも Read and write）と Checks（Read-only）。Commit statuses は `minimumReleaseAge` が各ブランチに付ける `renovate/stability-days` ステータスの書き込みに使います。Checks は automerge の前に CI の結果（check run）を読むのに使います。public repo の check run は権限なしでも読めますが、private repo では読めず、Renovate がブランチを未完了とみなしたまま automerge しません。
 
 **承認用 App** の権限: Pull requests（Read and write）のみ。public repo は approve 1 件を必須とし、GitHub は PR の作成者自身による approve を認めないため、Renovate は自分の PR のゲートを自力で通せません。`renovate.yml` の `approve` job がこの App で approve を付け、要件を回避せずに満たします。
 
