@@ -73,7 +73,10 @@ module.exports = {
       matchFileNames: ['apm.yml'],
       postUpgradeTasks: {
         commands: ['env -i HOME=/home/ubuntu PATH=/usr/bin:/bin /tmp/renovate-tools/apm/apm install'],
-        fileFilters: ['.mcp.json', '.codex/config.toml', 'apm.lock.yaml'],
+        // targets（claude / codex）の展開先は root ごと拾う。apm 自身も .claude/ と .codex/・.agents/
+        // を target の持ち物として扱う。primitive ごとに挙げると、書き漏らした先が lock にだけ載って
+        // 黙って commit から落ちる。.mcp.json は Claude の MCP 設定で、.claude/ の外にある。
+        fileFilters: ['.mcp.json', '.claude/**', '.codex/**', '.agents/**', 'apm.lock.yaml'],
         executionMode: 'branch',
       },
     },
