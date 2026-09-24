@@ -99,21 +99,90 @@ jobs:
           RENOVATE_DRY_RUN: ${{ inputs.dryRun && 'full' || '' }}
 
   # Renovate's PRs need an approving review before they can automerge, which it
-  # cannot give itself. Dispatching is a separate job so `actions: write` stays off
-  # the Renovate token. Runs even if Renovate failed, since PRs from earlier runs may
+  # cannot give itself. Runs even if Renovate failed, since PRs from earlier runs may
   # still be waiting, but not on a dry run — approving is a real write, and dry run
   # promises none.
-  dispatch-approver:
+  #
+  # A sweep rather than an event workflow in each repo, which is what the owner's own
+  # PRs use: these PRs are not latency-sensitive, and re-reading every open one is
+  # what lets a missed run cost nothing.
+  approve:
     needs: renovate
     if: ${{ !cancelled() && !inputs.dryRun }}
     runs-on: ubuntu-latest
     permissions:
-      actions: write # workflow_dispatch via the API
+      id-token: write # assume the signing role, see below
     steps:
-      - name: Dispatch Approve bot PRs
+      # Same arrangement as the job above: the key stays in AWS KMS and this run
+      # only gets a signature over the App's JWT, through a role of its own.
+      - name: Generate approver App token
+        id: app-token
+        uses: suzuki-shunsuke/create-github-app-token-aws-kms@b4a29a5f1cd6ea2b633d6ee6d9806dbce26493cf # v0.0.3
+        with:
+          client-id: ${{ vars.RENOVATE_APPROVE_APP_CLIENT_ID }}
+          kms-key-id: arn:aws:kms:ap-northeast-1:509266991346:alias/github-app-pr-approver
+          role-to-assume: arn:aws:iam::509266991346:role/github-actions-github-app-pr-approver
+          # The sweep spans every repo Renovate opens PRs in, so it cannot pin a
+          # repositories: list without going stale as repos are added.
+          owner: ${{ github.repository_owner }} # zizmor: ignore[github-app]
+          # The App is granted nothing else, but scope the token anyway.
+          permission-pull-requests: write
+
+      - name: Approve automerge-labelled Renovate PRs
         env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-        # GITHUB_TOKEN normally cannot start a workflow, but workflow_dispatch is a
-        # documented exception, so this does not need the App token.
-        run: gh workflow run approve-bot-prs.yml --repo "$REPO"
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          OWNER: ${{ github.repository_owner }}
+          # Author to approve for. Add another bot here if one is introduced —
+          # the App and its key are shared, so no new credential is needed.
+          PR_AUTHOR: app/boykush-renovate-app
+          APPROVER: boykush-pr-approver[bot]
+        run: |
+          set -euo pipefail
+
+          # The label is set by the same packageRules entry that turns automerge on
+          # (config.js), so an approval can never outrun the automerge decision.
+          mapfile -t prs < <(
+            gh search prs --owner "$OWNER" --author "$PR_AUTHOR" \
+              --state open --label automerge --limit 100 \
+              --json repository,number \
+              --jq '.[] | "\(.repository.nameWithOwner) \(.number)"'
+          )
+
+          if [ "${#prs[@]}" -eq 0 ]; then
+            echo "No automerge-labelled PRs by $PR_AUTHOR."
+            exit 0
+          fi
+
+          blocked=0
+          for entry in "${prs[@]}"; do
+            repo=${entry%% *}
+            num=${entry##* }
+
+            # Approvals stack silently, so skip what this App already approved.
+            already=$(gh api "repos/$repo/pulls/$num/reviews" --paginate \
+              --jq "[.[] | select(.user.login == \"$APPROVER\" and .state == \"APPROVED\")] | length" \
+              2>/dev/null || echo "unknown")
+
+            if [ "$already" != "unknown" ] && [ "$already" -gt 0 ]; then
+              echo "= $repo#$num already approved"
+              continue
+            fi
+
+            if err=$(gh api "repos/$repo/pulls/$num/reviews" \
+                       --method POST --field event=APPROVE 2>&1 >/dev/null); then
+              echo "+ $repo#$num approved"
+              continue
+            fi
+
+            # "not permitted to create or approve" means the Actions restriction
+            # reaches App tokens too, which would sink this whole design — surface
+            # it loudly. A plain 403 is just a repo the App is not installed on.
+            if grep -qi "not permitted to create or approve" <<<"$err"; then
+              echo "::error::$repo#$num — Actions is blocked from approving PRs. $err"
+              blocked=1
+            else
+              echo "::warning::$repo#$num — could not approve (App installed there?). $err"
+            fi
+          done
+
+          exit "$blocked"
