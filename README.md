@@ -31,11 +31,13 @@ GitHub App を 2 つ使います。横断実行を担う **Renovate App** と、
 | 種別 | 名前 | 用途 |
 | --- | --- | --- |
 | Variable | `RENOVATE_APP_CLIENT_ID` | Renovate App の Client ID（公開識別子） |
-| Secret | `RENOVATE_APP_PRIVATE_KEY` | Renovate App の秘密鍵（`.pem` 全文） |
 | Variable | `RENOVATE_APPROVE_APP_CLIENT_ID` | 承認用 App の Client ID（公開識別子） |
-| Secret | `RENOVATE_APPROVE_APP_PRIVATE_KEY` | 承認用 App の秘密鍵（`.pem` 全文） |
 
-`actions/create-github-app-token` の `app-id` は deprecated のため、数値の App ID ではなく Client ID（`Iv23li…`）を渡します。
+**秘密鍵はこの repo に置きません。** 2つの App の private key は AWS KMS の中にあり、取り出せません。ワークフローは [`suzuki-shunsuke/create-github-app-token-aws-kms`](https://github.com/suzuki-shunsuke/create-github-app-token-aws-kms) で **JWT の署名だけを KMS に任せて**インストールトークンを受け取ります。AWS の認証は run の OIDC で、App ごとに別の IAM role（できるのは `kms:Sign` だけ）。key と role を作るのは `boykush/infrastructure-as-code` の `terraform/aws.tf` です。
+
+期限の無い鍵を repo secret に置かないための構成で、鍵が漏れて無期限にトークンを発行され続ける経路が消えます。代わりに残るのは「署名を頼める run」だけで、そちらは IAM で剥がせます。
+
+渡しているのが数値の App ID ではなく Client ID（`Iv23li…`）なのは公式 action に合わせた名残で、この action は両方受け付けます（両方あれば `client-id` が優先）。
 
 **Renovate App** の権限: Contents / Pull requests / Issues / Workflows / Commit statuses（いずれも Read and write）。Commit statuses は `minimumReleaseAge` が各ブランチに付ける `renovate/stability-days` ステータスの書き込みに使います。
 
