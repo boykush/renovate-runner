@@ -35,7 +35,7 @@ GitHub App を 2 つ使います。横断実行を担う **Renovate App** と、
 | Variable | `RENOVATE_APP_CLIENT_ID` | Renovate App の Client ID（公開識別子） |
 | Variable | `RENOVATE_APPROVE_APP_CLIENT_ID` | 承認用 App の Client ID（公開識別子） |
 
-**秘密鍵はこの repo に置きません。** 2つの App の private key は AWS KMS の中にあり、取り出せません。ワークフローは [`suzuki-shunsuke/create-github-app-token-aws-kms`](https://github.com/suzuki-shunsuke/create-github-app-token-aws-kms) で **JWT の署名だけを KMS に任せて**インストールトークンを受け取ります。AWS の認証は run の OIDC で、App ごとに別の IAM role（できるのは `kms:Sign` だけ）。key と role を作るのは `boykush/infrastructure-as-code` の `terraform/aws.tf` です。
+**秘密鍵はこの repo に置きません。** 2つの App の private key は AWS KMS の中にあり、取り出せません。ワークフローは [boykush/workflows](https://github.com/boykush/workflows) の `github-app-token` action で **JWT の署名だけを KMS に任せて**インストールトークンを受け取ります（実体は [`suzuki-shunsuke/create-github-app-token-aws-kms`](https://github.com/suzuki-shunsuke/create-github-app-token-aws-kms)）。AWS の認証は run の OIDC で、App ごとに別の IAM role（できるのは `kms:Sign` だけ）。key と role を作るのは `boykush/infrastructure-as-code` の `terraform/aws.tf` です。
 
 期限の無い鍵を repo secret に置かないための構成で、鍵が漏れて無期限にトークンを発行され続ける経路が消えます。代わりに残るのは「署名を頼める run」だけで、そちらは IAM で剥がせます。
 
