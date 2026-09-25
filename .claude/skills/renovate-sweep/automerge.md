@@ -4,13 +4,19 @@ SKILL.md の手順 5 から参照されます。automerge に回せる候補が�
 
 ## 仕組み
 
-packageRule が `automerge: true` と `addLabels: ["automerge"]` を付ける → `renovate.yml` の `approve` job が `automerge` ラベルの付いた Renovate PR を承認 App（`boykush-pr-approver`）で approve → 同じ run の `merge` job が CI の完走を待って Renovate をもう一度走らせ、Renovate 自身が `PUT /pulls/{n}/merge` でマージ、という流れです。
+packageRule が `automerge: true` と `addLabels: ["automerge"]` を付ける → `renovate.yml` の `approve` job が `automerge` ラベルの付いた Renovate PR を承認 App（`boykush-pr-approver`）で approve → マージ、という流れです。最後のマージ経路だけが repo によって2通りに分かれます（下記）。
 
-**マージは Renovate の実行中にしか起きません。** `merge` job はそのための2 pass 目で、`automerge` ラベルの PR を持つ repo だけに絞って走ります。これが無いと PR は次回の scheduled run まで待つことになり、実測で中央値5時間かかっていました。
+**Renovate 自前のマージは、Renovate の実行中にしか起きません。** `renovate.yml` の `merge` job がそのための2 pass 目で、CI の完走を待ってから `automerge` ラベルの PR を持つ repo だけに絞って Renovate をもう一度走らせます。これが無いと PR は次回の scheduled run まで待つことになり、実測で中央値5時間かかっていました。
 
 **`automerge` と `addLabels` は必ず対で書きます。** public repo は承認1件必須で、Renovate は自分の PR を承認できません。ラベルが無いと承認 App が対象を絞れず拾わないため、automerge が永久に待ち続けます。
 
-`allow_auto_merge`（GitHub 側の auto-merge）は使いません。有効にするとマージボックスが待機表示に置き換わり、bypass コントロールが UI から消えるためです（github-management の CLAUDE.md 参照）。Renovate 自前の automerge はブランチ全体の status を待つので、required check だけを見る platform automerge より厳しい gate になります。
+`allow_auto_merge`（GitHub 側の auto-merge）は repo ごとに決めます。既定は false で、有効なのは livt だけです。基準と置き場所は github-management 側が持ちます（方針は `AGENTS.md`、有効化は `repositories/<repo>.tf`）。
+
+**この設定はマージの経路ごと変えます。** Renovate の `platformAutomerge` は既定 true なので、有効な repo では Renovate は自分でマージせず、PR を作った時点で GitHub の auto-merge を有効にして渡します。無効な repo では `tryPrAutomerge` が repo の `autoMergeAllowed` を見て `GitHub-native automerge: not enabled in repo settings` と出し、自前マージ（`PUT /pulls/{n}/merge`）に落ちます。
+
+gate が変わるのはここです。Renovate 自前の automerge は**ブランチ全体の status** を待ち、GitHub の auto-merge は **required check だけ**を見ます。有効にする前に、その repo の PR で走る check が required に全部入っているかを確認してください（livt は `go` / `zizmor` の2つで、PR に出る check runs と一致しています。差は Renovate 自身が付ける `renovate/stability-days` だけ）。
+
+有効な repo では `merge` job は空振りします（Renovate が次に来る前に GitHub がマージ済みのため）。どちらの経路でも `automerge` ラベルと承認 App は要ります。
 
 ## 置き場所の決め方
 
