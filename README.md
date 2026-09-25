@@ -9,6 +9,7 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 | ファイル | 役割 |
 | --- | --- |
 | `.github/workflows/renovate.yml` | 4時間ごとに self-hosted Renovate を実行し、続けて `automerge` ラベルの付いた PR を承認 App でレビュー承認し、CI の完走を待って Renovate をもう一度走らせてマージまで済ませる。App token は boykush/workflows の共有 action が AWS KMS の署名で作る |
+| `.github/workflows/ai-review.yml` | owner の PR を boykush/adr のルールと照合し、Claude GitHub App として承認するか変更を求める。実体は boykush/workflows の reusable workflow |
 | `config.js` | セルフホスト用のグローバル設定（autodiscover / onboarding など）。**全リポジトリ共通**の挙動を定義 |
 | `mise.toml` / `mise.lock` | Renovate の post-upgrade task が使う apm の版とチェックサム |
 | `renovate.json` | この `renovate-runner` リポジトリ自身の依存設定（onboarding 済み扱い） |
