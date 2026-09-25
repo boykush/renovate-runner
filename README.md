@@ -8,7 +8,7 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 
 | ファイル | 役割 |
 | --- | --- |
-| `.github/workflows/renovate.yml` | 4時間ごとに self-hosted Renovate を実行し、続けて `automerge` ラベルの付いた PR を承認 App でレビュー承認し、CI の完走を待って Renovate をもう一度走らせてマージまで済ませる。App token はどちらも AWS KMS の署名で作る |
+| `.github/workflows/renovate.yml` | 4時間ごとに self-hosted Renovate を実行し、続けて `automerge` ラベルの付いた PR を承認 App でレビュー承認し、CI の完走を待って Renovate をもう一度走らせてマージまで済ませる。App token は boykush/workflows の共有 action が AWS KMS の署名で作る |
 | `config.js` | セルフホスト用のグローバル設定（autodiscover / onboarding など）。**全リポジトリ共通**の挙動を定義 |
 | `mise.toml` / `mise.lock` | Renovate の post-upgrade task が使う apm の版とチェックサム |
 | `renovate.json` | この `renovate-runner` リポジトリ自身の依存設定（onboarding 済み扱い） |
@@ -29,18 +29,13 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 
 ## 認証
 
-GitHub App を 2 つ使います。横断実行を担う **Renovate App** と、その PR に approve を付けるだけの **承認用 App** です。ワークフローは以下の Variables / Secrets を参照します。App 本体・権限・払い出しは、いずれも `boykush/github-management` で管理されます。
+GitHub App を 2 つ使います。横断実行を担う **Renovate App** と、その PR に approve を付けるだけの **承認用 App** です。App 本体・権限・払い出しは、いずれも `boykush/github-management` で管理されます。
 
-| 種別 | 名前 | 用途 |
-| --- | --- | --- |
-| Variable | `RENOVATE_APP_CLIENT_ID` | Renovate App の Client ID（公開識別子） |
-| Variable | `RENOVATE_APPROVE_APP_CLIENT_ID` | 承認用 App の Client ID（公開識別子） |
+**この repo が持つのは App の名前だけです**（`renovate` / `pr-approver`）。トークンは [boykush/workflows](https://github.com/boykush/workflows) の `github-app-token` action が発行し、App の識別子・KMS の alias・IAM role はその名前から引かれます。Variables も Secrets も要りません。
 
-**秘密鍵はこの repo に置きません。** 2つの App の private key は AWS KMS の中にあり、取り出せません。ワークフローは [`suzuki-shunsuke/create-github-app-token-aws-kms`](https://github.com/suzuki-shunsuke/create-github-app-token-aws-kms) で **JWT の署名だけを KMS に任せて**インストールトークンを受け取ります。AWS の認証は run の OIDC で、App ごとに別の IAM role（できるのは `kms:Sign` だけ）。key と role を作るのは `boykush/infrastructure-as-code` の `terraform/aws.tf` です。
+**秘密鍵はこの repo に置きません。** 2つの App の private key は AWS KMS の中にあり、取り出せません。action（実体は [`suzuki-shunsuke/create-github-app-token-aws-kms`](https://github.com/suzuki-shunsuke/create-github-app-token-aws-kms)）は **JWT の署名だけを KMS に任せて**インストールトークンを受け取ります。AWS の認証は run の OIDC で、App ごとに別の IAM role（できるのは `kms:Sign` だけ）。key と role を作るのは `boykush/infrastructure-as-code` の `terraform/aws.tf` です。
 
 期限の無い鍵を repo secret に置かないための構成で、鍵が漏れて無期限にトークンを発行され続ける経路が消えます。代わりに残るのは「署名を頼める run」だけで、そちらは IAM で剥がせます。
-
-渡しているのが数値の App ID ではなく Client ID（`Iv23li…`）なのは公式 action に合わせた名残で、この action は両方受け付けます（両方あれば `client-id` が優先）。
 
 **Renovate App** の権限: Contents / Pull requests / Issues / Workflows / Commit statuses（いずれも Read and write）と Checks（Read-only）。Commit statuses は `minimumReleaseAge` が各ブランチに付ける `renovate/stability-days` ステータスの書き込みに使います。Checks は automerge の前に CI の結果（check run）を読むのに使います。public repo の check run は権限なしでも読めますが、private repo では読めず、Renovate がブランチを未完了とみなしたまま automerge しません。
 

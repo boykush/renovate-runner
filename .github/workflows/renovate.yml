@@ -34,22 +34,18 @@ jobs:
       contents: read # checkout
       id-token: write # assume the signing role, see below
     steps:
-      # The App's private key is in AWS KMS and cannot be read back out; this
-      # action assumes the role with the run's OIDC token and has KMS sign the
-      # App's JWT. The credentials stay inside the action, and the only thing
-      # the role can do with the key is produce that one signature.
+      # The App's private key is in AWS KMS and cannot be read back out; the shared
+      # action holds that arrangement and takes the App by name, so nothing here
+      # names its id, its key or the role allowed to sign with it.
       - name: Generate GitHub App token
         id: app-token
-        uses: suzuki-shunsuke/create-github-app-token-aws-kms@b4a29a5f1cd6ea2b633d6ee6d9806dbce26493cf # v0.0.3
+        uses: boykush/workflows/.github/actions/github-app-token@e5b631cdd9393a157988232df304e07fba35fb79
         with:
-          client-id: ${{ vars.RENOVATE_APP_CLIENT_ID }}
-          kms-key-id: arn:aws:kms:ap-northeast-1:509266991346:alias/github-app-renovate
-          role-to-assume: arn:aws:iam::509266991346:role/github-actions-github-app-renovate
-          # Renovate autodiscovers every boykush/* repository, so the token must
-          # stay owner-wide. This single "all repositories" finding is knowingly
-          # accepted: pinning to a repositories: list would defeat autodiscovery
-          # of newly created repos. The permissions below are still scoped down.
-          owner: ${{ github.repository_owner }} # zizmor: ignore[github-app]
+          app: renovate
+          # Owner-wide on purpose: Renovate autodiscovers every boykush/* repository,
+          # so a fixed repositories: list would leave newly created repos out. The
+          # breadth is stated here because the audit does not reach through the action.
+          owner: ${{ github.repository_owner }}
           # Scope the token to only the permissions Renovate needs instead of
           # inheriting every permission the App was granted at installation.
           permission-contents: write # create branches and commits
@@ -118,18 +114,16 @@ jobs:
     permissions:
       id-token: write # assume the signing role, see below
     steps:
-      # Same arrangement as the job above: the key stays in AWS KMS and this run
-      # only gets a signature over the App's JWT, through a role of its own.
+      # Same arrangement as the job above, through a key and a role of its own —
+      # which the action reaches from the App's name.
       - name: Generate approver App token
         id: app-token
-        uses: suzuki-shunsuke/create-github-app-token-aws-kms@b4a29a5f1cd6ea2b633d6ee6d9806dbce26493cf # v0.0.3
+        uses: boykush/workflows/.github/actions/github-app-token@e5b631cdd9393a157988232df304e07fba35fb79
         with:
-          client-id: ${{ vars.RENOVATE_APPROVE_APP_CLIENT_ID }}
-          kms-key-id: arn:aws:kms:ap-northeast-1:509266991346:alias/github-app-pr-approver
-          role-to-assume: arn:aws:iam::509266991346:role/github-actions-github-app-pr-approver
+          app: pr-approver
           # The sweep spans every repo Renovate opens PRs in, so it cannot pin a
           # repositories: list without going stale as repos are added.
-          owner: ${{ github.repository_owner }} # zizmor: ignore[github-app]
+          owner: ${{ github.repository_owner }}
           # The App is granted nothing else, but scope the token anyway.
           permission-pull-requests: write
 
@@ -218,12 +212,10 @@ jobs:
       # with the same permissions the run above takes — not the approver's.
       - name: Generate GitHub App token
         id: app-token
-        uses: suzuki-shunsuke/create-github-app-token-aws-kms@b4a29a5f1cd6ea2b633d6ee6d9806dbce26493cf # v0.0.3
+        uses: boykush/workflows/.github/actions/github-app-token@e5b631cdd9393a157988232df304e07fba35fb79
         with:
-          client-id: ${{ vars.RENOVATE_APP_CLIENT_ID }}
-          kms-key-id: arn:aws:kms:ap-northeast-1:509266991346:alias/github-app-renovate
-          role-to-assume: arn:aws:iam::509266991346:role/github-actions-github-app-renovate
-          owner: ${{ github.repository_owner }} # zizmor: ignore[github-app]
+          app: renovate
+          owner: ${{ github.repository_owner }}
           permission-contents: write # create branches and commits
           permission-pull-requests: write # open and update pull requests
           permission-issues: write # maintain the dependency dashboard issue
