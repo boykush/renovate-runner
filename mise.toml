@@ -6,5 +6,6 @@
 
 [settings]
 # Record exact versions + checksums in mise.lock (committed): this binary runs next to
-# Renovate's owner-wide token.
+# Renovate's owner-wide token. On a bump, regenerate every platform the lock covers:
+# mise lock -p linux-x64,linux-arm64,macos-arm64,macos-x64
 lockfile = true
