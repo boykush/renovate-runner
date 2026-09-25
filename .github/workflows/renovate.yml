@@ -108,9 +108,9 @@ jobs:
   # still be waiting, but not on a dry run — approving is a real write, and dry run
   # promises none.
   #
-  # A sweep rather than an event workflow in each repo, which is what the owner's own
-  # PRs use: these PRs are not latency-sensitive, and re-reading every open one is
-  # what lets a missed run cost nothing.
+  # A sweep rather than an event workflow in each repo: these PRs are not
+  # latency-sensitive, and re-reading every open one is what lets a missed run cost
+  # nothing.
   approve:
     needs: renovate
     if: ${{ !cancelled() && !inputs.dryRun }}

@@ -59,7 +59,6 @@ module.exports = {
         'Skip workflows Terraform overwrites; bump github-management/templates instead',
       matchFileNames: [
         '.github/workflows/zizmor.yml',
-        '.github/workflows/approve-pr.yml',
       ],
       enabled: false,
     },
