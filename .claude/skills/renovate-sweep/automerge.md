@@ -4,7 +4,9 @@ SKILL.md の手順 5 から参照されます。automerge に回せる候補が�
 
 ## 仕組み
 
-packageRule が `automerge: true` と `addLabels: ["automerge"]` を付ける → `renovate.yml` の `approve` job が `automerge` ラベルの付いた Renovate PR を承認 App（`boykush-pr-approver`）で approve → Renovate 自身が `PUT /pulls/{n}/merge` でマージ、という流れです。
+packageRule が `automerge: true` と `addLabels: ["automerge"]` を付ける → `renovate.yml` の `approve` job が `automerge` ラベルの付いた Renovate PR を承認 App（`boykush-pr-approver`）で approve → 同じ run の `merge` job が CI の完走を待って Renovate をもう一度走らせ、Renovate 自身が `PUT /pulls/{n}/merge` でマージ、という流れです。
+
+**マージは Renovate の実行中にしか起きません。** `merge` job はそのための2 pass 目で、`automerge` ラベルの PR を持つ repo だけに絞って走ります。これが無いと PR は次回の scheduled run まで待つことになり、実測で中央値5時間かかっていました。
 
 **`automerge` と `addLabels` は必ず対で書きます。** public repo は承認1件必須で、Renovate は自分の PR を承認できません。ラベルが無いと承認 App が対象を絞れず拾わないため、automerge が永久に待ち続けます。
 

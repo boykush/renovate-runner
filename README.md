@@ -8,7 +8,7 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 
 | ファイル | 役割 |
 | --- | --- |
-| `.github/workflows/renovate.yml` | 4時間ごとに self-hosted Renovate を実行し、続けて `automerge` ラベルの付いた PR を承認 App でレビュー承認する。App token はどちらも AWS KMS の署名で作る |
+| `.github/workflows/renovate.yml` | 4時間ごとに self-hosted Renovate を実行し、続けて `automerge` ラベルの付いた PR を承認 App でレビュー承認し、CI の完走を待って Renovate をもう一度走らせてマージまで済ませる。App token はどちらも AWS KMS の署名で作る |
 | `config.js` | セルフホスト用のグローバル設定（autodiscover / onboarding など）。**全リポジトリ共通**の挙動を定義 |
 | `mise.toml` / `mise.lock` | Renovate の post-upgrade task が使う apm の版とチェックサム |
 | `renovate.json` | この `renovate-runner` リポジトリ自身の依存設定（onboarding 済み扱い） |
@@ -24,6 +24,7 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
   - commit に載せる範囲（`fileFilters`）は、targets（claude / codex）の展開先を root ごと指定しています。skill や hook を1つずつ挙げると、書き漏らした先が lock にだけ載って commit から落ちるためです。consumer の `apm.yml` に targets を足すときは、その target の root も `fileFilters` に足します。
   - apm は `env -i` で空の環境から起動します。Renovate は post-upgrade task に token 入りの git 設定を渡しますが、apm はそれがあると clone を拒否します。ai-plugins は public なので token は要らず、apm に token を見せずに済みます。
   - apm は `mise.toml` で版を、`mise.lock` でチェックサムを固定し、workflow が Renovate のコンテナから見える `/tmp/renovate-tools/apm` に置きます。apm の版を上げたら `mise lock -p linux-x64,linux-arm64,macos-arm64,macos-x64` で `mise.lock` も作り直します。
+- automerge は PR を開いたのと同じ run の中で完結させます。Renovate がマージするのは自身の実行中だけなので、1 pass では次回実行まで待つことになります。30日を計測したところ、承認と CI は PR 作成から約6分で揃うのに、実際のマージは中央値5時間後でした（`schedule` の配送自体が中央値2時間半遅れ、1日6回のうち4.6回しか届いていません）。`approve` の後に CI の完走を待ち、`automerge` ラベルの PR を持つ repo だけに絞って Renovate をもう一度走らせます（`RENOVATE_REPOSITORIES`。環境変数は `config.js` より優先されます）。
 - まだ Renovate 設定が無いリポジトリには onboarding PR が自動で作成されます。
 
 ## 認証
