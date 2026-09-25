@@ -34,17 +34,19 @@ jobs:
       contents: read # checkout
       id-token: write # assume the signing role, see below
     steps:
-      # The App's private key is in AWS KMS and cannot be read back out; the shared
-      # action holds that arrangement and takes the App by name, so nothing here
-      # names its id, its key or the role allowed to sign with it.
+      # The App's private key is in AWS KMS and cannot be read back out; the
+      # action has KMS sign the App's JWT with this run's own OIDC identity, and
+      # the only thing the role can do with the key is produce that signature.
       - name: Generate GitHub App token
         id: app-token
         uses: boykush/workflows/.github/actions/github-app-token@e5b631cdd9393a157988232df304e07fba35fb79
         with:
           app: renovate
-          # Owner-wide on purpose: Renovate autodiscovers every boykush/* repository,
-          # so a fixed repositories: list would leave newly created repos out. The
-          # breadth is stated here because the audit does not reach through the action.
+          # Renovate autodiscovers every boykush/* repository, so the token must
+          # stay owner-wide: pinning to a repositories: list would defeat
+          # autodiscovery of newly created repos, and the permissions below are
+          # scoped down instead. The github-app audit does not reach through the
+          # action, so the reason for the breadth is kept here.
           owner: ${{ github.repository_owner }}
           # Scope the token to only the permissions Renovate needs instead of
           # inheriting every permission the App was granted at installation.
@@ -114,8 +116,8 @@ jobs:
     permissions:
       id-token: write # assume the signing role, see below
     steps:
-      # Same arrangement as the job above, through a key and a role of its own —
-      # which the action reaches from the App's name.
+      # Same arrangement as the job above, through a role and a key of its own:
+      # this run only ever gets a signature over the App's JWT.
       - name: Generate approver App token
         id: app-token
         uses: boykush/workflows/.github/actions/github-app-token@e5b631cdd9393a157988232df304e07fba35fb79
@@ -208,8 +210,8 @@ jobs:
       contents: read # checkout
       id-token: write # assume the signing role, see below
     steps:
-      # Renovate is the one that merges, so this pass needs the Renovate App's token,
-      # with the same permissions the run above takes — not the approver's.
+      # Renovate is the one that merges, so this pass takes the Renovate App's token
+      # with the same permissions the run above does — not the approver's.
       - name: Generate GitHub App token
         id: app-token
         uses: boykush/workflows/.github/actions/github-app-token@e5b631cdd9393a157988232df304e07fba35fb79

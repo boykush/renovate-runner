@@ -25,15 +25,16 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
   - apm は `env -i` で空の環境から起動します。Renovate は post-upgrade task に token 入りの git 設定を渡しますが、apm はそれがあると clone を拒否します。ai-plugins は public なので token は要らず、apm に token を見せずに済みます。
   - apm は `mise.toml` で版を、`mise.lock` でチェックサムを固定し、workflow が Renovate のコンテナから見える `/tmp/renovate-tools/apm` に置きます。apm の版を上げたら `mise lock -p linux-x64,linux-arm64,macos-arm64,macos-x64` で `mise.lock` も作り直します。
 - automerge は PR を開いたのと同じ run の中で完結させます。Renovate がマージするのは自身の実行中だけなので、1 pass では次回実行まで待つことになります。30日を計測したところ、承認と CI は PR 作成から約6分で揃うのに、実際のマージは中央値5時間後でした（`schedule` の配送自体が中央値2時間半遅れ、1日6回のうち4.6回しか届いていません）。`approve` の後に CI の完走を待ち、`automerge` ラベルの PR を持つ repo だけに絞って Renovate をもう一度走らせます（`RENOVATE_REPOSITORIES`。環境変数は `config.js` より優先されます）。
+  - `allow_auto_merge` が有効な repo（いまは livt だけ）では、Renovate は `platformAutomerge` により GitHub 側の auto-merge に渡すので、この 2 pass 目は空振りします。
 - まだ Renovate 設定が無いリポジトリには onboarding PR が自動で作成されます。
 
 ## 認証
 
 GitHub App を 2 つ使います。横断実行を担う **Renovate App** と、その PR に approve を付けるだけの **承認用 App** です。App 本体・権限・払い出しは、いずれも `boykush/github-management` で管理されます。
 
-**この repo が持つのは App の名前だけです**（`renovate` / `pr-approver`）。トークンは [boykush/workflows](https://github.com/boykush/workflows) の `github-app-token` action が発行し、App の識別子・KMS の alias・IAM role はその名前から引かれます。Variables も Secrets も要りません。
+**この repo が持つのは App の名前だけです**（`renovate` / `pr-approver`）。識別子・KMS の alias・IAM role はすべて共有 action がその名前から引くので、Variables も Secrets も要りません。
 
-**秘密鍵はこの repo に置きません。** 2つの App の private key は AWS KMS の中にあり、取り出せません。action（実体は [`suzuki-shunsuke/create-github-app-token-aws-kms`](https://github.com/suzuki-shunsuke/create-github-app-token-aws-kms)）は **JWT の署名だけを KMS に任せて**インストールトークンを受け取ります。AWS の認証は run の OIDC で、App ごとに別の IAM role（できるのは `kms:Sign` だけ）。key と role を作るのは `boykush/infrastructure-as-code` の `terraform/aws.tf` です。
+**秘密鍵はこの repo に置きません。** 2つの App の private key は AWS KMS の中にあり、取り出せません。ワークフローは [boykush/workflows](https://github.com/boykush/workflows) の `github-app-token` action で **JWT の署名だけを KMS に任せて**インストールトークンを受け取ります（実体は [`suzuki-shunsuke/create-github-app-token-aws-kms`](https://github.com/suzuki-shunsuke/create-github-app-token-aws-kms)）。AWS の認証は run の OIDC で、App ごとに別の IAM role（できるのは `kms:Sign` だけ）。key と role を作るのは `boykush/infrastructure-as-code` の `terraform/aws.tf` です。
 
 期限の無い鍵を repo secret に置かないための構成で、鍵が漏れて無期限にトークンを発行され続ける経路が消えます。代わりに残るのは「署名を頼める run」だけで、そちらは IAM で剥がせます。
 

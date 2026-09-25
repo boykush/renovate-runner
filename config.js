@@ -92,6 +92,25 @@ module.exports = {
       automerge: true,
       addLabels: ['automerge'],
     },
+    // workflows も自前で、呼び出し側は素の SHA で固定している。main の1 commit が、その reusable
+    // workflow や action を呼ぶ全 repo に同じ digest bump の PR を開くので、待たずに automerge する。
+    // ai-review を入れた repo でも Renovate の PR は ai-review の対象外で、承認は sweep が出す。
+    {
+      description: 'Automerge digest updates to boykush/workflows',
+      matchManagers: ['custom.regex'],
+      matchDepNames: ['boykush/workflows'],
+      matchUpdateTypes: ['digest'],
+      automerge: true,
+      addLabels: ['automerge'],
+    },
+    // github-actions の manager も同じ uses: の行を拾いうるが、版の書かれていない SHA は上げられない。
+    // 下の customManager に任せ、二重に扱わせない。
+    {
+      description: 'Leave boykush/workflows pins to the git-refs manager',
+      matchManagers: ['github-actions'],
+      matchDepNames: ['boykush/workflows', 'boykush/workflows/**'],
+      enabled: false,
+    },
     // apm の依存は第三者のものも待たせない。Renovate は digest だけの更新に日時を渡さないので、
     // minimumReleaseAge を掛けても待つことにはならず、PR はすぐ開いて renovate/stability-days が
     // pending のまま残るだけになる。
@@ -134,6 +153,19 @@ module.exports = {
       // git-refs は git ls-remote で全 ref を読むので、branch がいくつあっても main を引ける。
       // github-digest は branch を名前順に 300 件までしか読まず、それより後ろに main が来る repo
       // （claude-plugins-official など）では digest が引けない。
+      packageNameTemplate: 'https://github.com/{{depName}}',
+      datasourceTemplate: 'git-refs',
+    },
+    // boykush/workflows の reusable workflow と action も、呼び出し側が素の SHA で固定し、main の HEAD
+    // を追う（tag は打たない運用）。github-actions の manager は版の書かれていない SHA を上げない。
+    {
+      customType: 'regex',
+      description: 'Track the HEAD of SHA-pinned boykush/workflows callers',
+      managerFilePatterns: ['/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/'],
+      matchStrings: [
+        'uses:\\s*(?<depName>boykush/workflows)/[^@\\s]+@(?<currentDigest>[0-9a-f]{40})',
+      ],
+      currentValueTemplate: 'main',
       packageNameTemplate: 'https://github.com/{{depName}}',
       datasourceTemplate: 'git-refs',
     },
