@@ -49,6 +49,18 @@ module.exports = {
       automerge: true,
       addLabels: ['automerge'],
     },
+    // golangci-lint は Go の repo がどれも mise で pin しており、1 リリースが全 Go repo に同じ bump の
+    // PR を開く。lint を回す CI の job が全 PR でその版を入れて走るので、壊す bump はその job が止める。
+    // GitHub の auto-merge を使う repo は required check しか待たないので、その job が required で
+    // あることが前提。renovate.json を持たない Go repo にも効かせるため、repo 側ではなくここに置く。
+    {
+      description: 'Automerge non-major golangci-lint updates',
+      matchManagers: ['mise'],
+      matchDepNames: ['golangci-lint'],
+      matchUpdateTypes: ['minor', 'patch'],
+      automerge: true,
+      addLabels: ['automerge'],
+    },
     // boykush/github-management fans these files out and rewrites them on every
     // `terraform apply`, so a bump merged into a copy is reverted — including the
     // actions/* ones the rule above would automerge. Global because they land in
