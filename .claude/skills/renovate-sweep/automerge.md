@@ -20,12 +20,13 @@ gate が変わるのはここです。Renovate 自前の automerge は**ブラ�
 
 ## 置き場所の決め方
 
-`config.js` のヘッダが「per-repository settings は各リポジトリの renovate.json へ」と宣言しています。それに従って機械的に振り分けてください。
+`config.js` のヘッダが「per-repository settings は各リポジトリの renovate.json へ（renovate.json を持たない repo にも効かせるものは除く）」と宣言しています。それに従って機械的に振り分けてください。
 
 | 対象 | 置き場所 | 理由 |
 | --- | --- | --- |
 | 全 repo 横断 | `config.js` | GitHub Actions は 1 リリースが全 repo に波及する。既存の `actions/**` ルールがこれ |
-| 特定 repo / エコシステム固有 | その repo の renovate.json | cargo を全体に書いても Rust repo 以外では死に設定になる。dotfiles が mise ルールを自前の renovate.json に置いているのが前例 |
+| 複数 repo が同じ版を pin するツール | `config.js` | 1 リリースが同じ bump の PR を各 repo に開き、renovate.json を持たない repo（adr）にも効かせたい。Go の repo すべてが pin する golangci-lint がこれ |
+| 特定 repo / 1 repo しか使わないエコシステム | その repo の renovate.json | cargo を全体に書いても Rust repo 以外では死に設定になる。dotfiles が mise ルールを自前の renovate.json に置いているのが前例 |
 
 repo 側 config は置き場所が揺れます。先に実在を確認してください。
 
@@ -39,7 +40,7 @@ done
 
 ## 広げる前に満たすべき条件
 
-1. **その repo の required check が、PR で走る CI を実質的に覆っていること。** required check が無い repo に automerge を付けると無検査でマージされます。ruleset を確認してください。
+1. **マージの経路が待つ check が、PR で走る CI を実質的に覆っていること。** 経路ごとに待つものが違います（上の「仕組み」参照）。GitHub の auto-merge を使う repo ではその job が required check に入っている必要があり、Renovate 自前のマージの repo ではその job が PR で必ず走れば足ります（paths で外れると待つ相手がいなくなる）。どちらも満たさなければ無検査でマージされます。required check は ruleset で確認してください。
 
    ```sh
    gh api repos/boykush/<repo>/rulesets --jq '.[].id' | while read -r id; do
