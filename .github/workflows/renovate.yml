@@ -74,7 +74,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup mise
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
 
       # The Renovate step runs in a container that sees only this runner's /tmp (the
       # action's docker-volumes default). apm ships as a directory, not a single binary,
@@ -259,7 +259,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup mise
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
 
       # This pass can pick up an apm.yml bump like any other, and postUpgradeTasks
       # reaches for apm at a fixed path, so stage it here too — a job gets its own
