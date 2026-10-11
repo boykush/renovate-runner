@@ -6,6 +6,14 @@
 // repos that have no renovate.json.
 //
 // Docs: https://docs.renovatebot.com/self-hosted-configuration/
+// boykush 自身が公開するもの。datasource ごとに package 名の形が違うので、形の数だけ並べる。
+const OWN_PACKAGES = [
+  'boykush/**',
+  'https://github.com/boykush/**',
+  'github.com/boykush/**',
+  'ghcr.io/boykush/**',
+];
+
 module.exports = {
   platform: 'github',
 
@@ -136,13 +144,17 @@ module.exports = {
     // 避けるためのもの。
     {
       description: "Don't hold back boykush's own releases",
-      matchPackageNames: [
-        'boykush/**',
-        'https://github.com/boykush/**',
-        'github.com/boykush/**',
-        'ghcr.io/boykush/**',
-      ],
+      matchPackageNames: OWN_PACKAGES,
       minimumReleaseAge: null,
+    },
+    // 自前のものは待たずに取り込む。出した本人が中身を知っているので、手で見る段を挟まない。
+    // gate は取り込む側の repo の CI。major は壊す変更を含みうるので手で見る。
+    {
+      description: "Automerge non-major updates to boykush's own releases",
+      matchPackageNames: OWN_PACKAGES,
+      matchUpdateTypes: ['minor', 'patch', 'digest', 'pinDigest'],
+      automerge: true,
+      addLabels: ['automerge'],
     },
   ],
 
