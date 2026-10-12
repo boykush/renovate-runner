@@ -200,6 +200,11 @@ module.exports = {
   // HOME と PATH はコンテナ（Renovate の image）の値。
   allowedCommands: [
     '^env -i HOME=/home/ubuntu PATH=/usr/bin:/bin /tmp/renovate-tools/apm/apm install$',
+    // scraps の jslibs/: bump と同じ commit で、crate に commit 済みのライブラリの写しを作り直す。
+    // rule と installTools（node・pnpm）は scraps の renovate.json が持つ。pnpm は依存の install
+    // script を既定で走らせないので、ここで動くのはその repo 自身の build script だけ。
+    '^pnpm --dir jslibs install$',
+    '^pnpm --dir jslibs run build$',
   ],
 
   // Open an onboarding PR on repositories that don't have a Renovate config yet.
