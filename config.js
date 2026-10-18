@@ -57,6 +57,16 @@ module.exports = {
       automerge: true,
       addLabels: ['automerge'],
     },
+    // mise-action は major も通す。壊す bump は toolchain を入れる step そのものを落とし、
+    // 後ろの step が走らないので CI が止める。
+    {
+      description: 'Automerge major updates to jdx/mise-action too',
+      matchManagers: ['github-actions'],
+      matchPackageNames: ['jdx/mise-action'],
+      matchUpdateTypes: ['major'],
+      automerge: true,
+      addLabels: ['automerge'],
+    },
     // golangci-lint は Go の repo がどれも mise で pin しており、1 リリースが全 Go repo に同じ bump の
     // PR を開く。lint を回す CI の job が全 PR でその版を入れて走るので、壊す bump はその job が止める。
     // GitHub の auto-merge を使う repo は required check しか待たないので、その job が required で
