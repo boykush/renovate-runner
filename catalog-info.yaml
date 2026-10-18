@@ -1,0 +1,24 @@
+# This repository's entities in boykush's Backstage catalog, found on main by its
+# GitHub discovery (boykush/infrastructure-as-code's applications/backstage/).
+# How an entity is written — which edges to draw, what a tag means — is set in
+# boykush/github-management's AGENTS.md and the comments atop its catalog/ files.
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: renovate-runner
+  description: >-
+    self-hosted Renovate を定期実行し、依存更新の PR を出す。対象は config.js の
+    autodiscoverFilter（boykush/* から除外を引いたもの）と、App の install 範囲が重なる repo
+spec:
+  type: repository
+  lifecycle: production
+  owner: user:boykush
+  system: repo-governance
+  consumesApis:
+    - adr-mcp
+    - catalog-mcp
+  dependsOn:
+    - component:ai-plugins
+    - component:workflows
+    - resource:renovate-app
+    - resource:pr-approver-app
