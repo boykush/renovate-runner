@@ -39,7 +39,7 @@ jobs:
       # the only thing the role can do with the key is produce that signature.
       - name: Generate GitHub App token
         id: app-token
-        uses: boykush/workflows/.github/actions/github-app-token@f32f641243003fc92621b605d6985c0712f7e2c4
+        uses: boykush/workflows/.github/actions/github-app-token@4046d12e1bc94dddc334879457577a6bdfcd4289
         with:
           app: renovate
           # Renovate autodiscovers every boykush/* repository, so the token must
@@ -120,7 +120,7 @@ jobs:
       # this run only ever gets a signature over the App's JWT.
       - name: Generate approver App token
         id: app-token
-        uses: boykush/workflows/.github/actions/github-app-token@f32f641243003fc92621b605d6985c0712f7e2c4
+        uses: boykush/workflows/.github/actions/github-app-token@4046d12e1bc94dddc334879457577a6bdfcd4289
         with:
           app: pr-approver
           # The sweep spans every repo Renovate opens PRs in, so it cannot pin a
@@ -214,7 +214,7 @@ jobs:
       # with the same permissions the run above does — not the approver's.
       - name: Generate GitHub App token
         id: app-token
-        uses: boykush/workflows/.github/actions/github-app-token@f32f641243003fc92621b605d6985c0712f7e2c4
+        uses: boykush/workflows/.github/actions/github-app-token@4046d12e1bc94dddc334879457577a6bdfcd4289
         with:
           app: renovate
           owner: ${{ github.repository_owner }}
