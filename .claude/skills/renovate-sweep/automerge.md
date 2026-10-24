@@ -10,13 +10,19 @@ packageRule が `automerge: true` と `addLabels: ["automerge"]` を付ける �
 
 **`automerge` と `addLabels` は必ず対で書きます。** public repo は承認1件必須で、Renovate は自分の PR を承認できません。ラベルが無いと承認 App が対象を絞れず拾わないため、automerge が永久に待ち続けます。
 
-`allow_auto_merge`（GitHub 側の auto-merge）は repo ごとに決めます。既定は false で、有効なのは livt だけです。基準と置き場所は github-management 側が持ちます（方針は `AGENTS.md`、有効化は `repositories/<repo>.tf`）。
+`allow_auto_merge`（GitHub 側の auto-merge）は repo ごとに決めます。既定は false です。基準と置き場所は github-management 側が持ちます（方針は `AGENTS.md`、どの repo で有効かは `repositories/<repo>.tf`）。
 
 **この設定はマージの経路ごと変えます。** Renovate の `platformAutomerge` は既定 true なので、有効な repo では Renovate は自分でマージせず、PR を作った時点で GitHub の auto-merge を有効にして渡します。無効な repo では `tryPrAutomerge` が repo の `autoMergeAllowed` を見て `GitHub-native automerge: not enabled in repo settings` と出し、自前マージ（`PUT /pulls/{n}/merge`）に落ちます。
 
 gate が変わるのはここです。Renovate 自前の automerge は**ブランチ全体の status** を待ち、GitHub の auto-merge は **required check だけ**を見ます。有効にする前に、その repo の PR で走る check が required に全部入っているかを確認してください（livt は `go` / `zizmor` の2つで、PR に出る check runs と一致しています。差は Renovate 自身が付ける `renovate/stability-days` だけ）。
 
 有効な repo では `merge` job は空振りします（Renovate が次に来る前に GitHub がマージ済みのため）。どちらの経路でも `automerge` ラベルと承認 App は要ります。
+
+## Dependabot の security update
+
+脆弱性の修正は Renovate ではなく Dependabot が出します（`config.js` の `vulnerabilityAlerts` は off）。その PR を merge まで運ぶのは boykush/workflows の `dependabot-merge` で、この skill の automerge とは別の経路です。対象・条件・止まる場所はそちらの README が持ちます。Dependabot の PR に `automerge` ラベルや packageRule を足しても何も起きません。
+
+効いてくるのは `allow_auto_merge` を広げるときです。**この設定は Renovate と Dependabot の両方の経路を切り替えます。** 有効にした repo では Dependabot の修正も GitHub の auto-merge で入るようになり、それには repo-writer App がその repo に install されている必要があります。入っていないと `dependabot-merge` の auto-merge を有効にする step が token の発行で落ち、PR は承認済みのまま残ります。`allow_auto_merge` を on にする PR を出すときは、repo-writer の install も依頼に含めてください（App の install は owner しかできません）。
 
 ## 置き場所の決め方
 
