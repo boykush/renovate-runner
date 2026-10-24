@@ -32,6 +32,13 @@ module.exports = {
   // Applies across every autodiscovered repository.
   minimumReleaseAge: '3 days',
 
+  // Security fixes are Dependabot's: github-management turns its security updates on
+  // and boykush/workflows' dependabot-merge carries them to merge. Renovate keeps to
+  // version updates, so the App goes without Dependabot alerts: read.
+  vulnerabilityAlerts: {
+    enabled: false,
+  },
+
   // Automerge, widened one group at a time. First group: GitHub's own actions —
   // first-party, and one release fans the same bump across every repo at once.
   // Majors stay manual; `**` also matches sub-path actions (actions/cache/restore).
