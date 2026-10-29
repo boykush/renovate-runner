@@ -85,7 +85,7 @@ jobs:
           cp -R "$(dirname "$(mise which apm)")" /tmp/renovate-tools/apm
 
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@9fea9f0fbf80401026d11d03911d62b1f70fef1f # v46.3.3
+        uses: renovatebot/github-action@2804199d260ad00c1fae0e9e842888369391c776 # v46.3.10
         with:
           configurationFile: config.js
           token: ${{ steps.app-token.outputs.token }}
@@ -270,7 +270,7 @@ jobs:
           cp -R "$(dirname "$(mise which apm)")" /tmp/renovate-tools/apm
 
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@9fea9f0fbf80401026d11d03911d62b1f70fef1f # v46.3.3
+        uses: renovatebot/github-action@2804199d260ad00c1fae0e9e842888369391c776 # v46.3.10
         with:
           configurationFile: config.js
           token: ${{ steps.app-token.outputs.token }}
