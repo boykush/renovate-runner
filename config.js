@@ -39,6 +39,10 @@ module.exports = {
     enabled: false,
   },
 
+  // Go の repo は CI で `go mod tidy -diff` を回すので、tidy しない bump は go.sum に古い行を残して落ちる。
+  // renovate.json を持たない Go の repo（adr）にも効かせるため、repo 側ではなくここに置く。
+  postUpdateOptions: ['gomodTidy'],
+
   // Automerge, widened one group at a time. First group: GitHub's own actions —
   // first-party, and one release fans the same bump across every repo at once.
   // Majors stay manual; `**` also matches sub-path actions (actions/cache/restore).
