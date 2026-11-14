@@ -3,26 +3,26 @@
 lockfile_version = 2
 
 [[tools."github:microsoft/apm"]]
-version = "0.31.0"
+version = "0.35.0"
 backend = "github:microsoft/apm"
-specifiers = ["0.31.0"]
+specifiers = ["v0.35.0"]
 
 [tools."github:microsoft/apm"."platforms.linux-arm64"]
-checksum = "sha256:256703569520bd60503c63a526b63cb6d0382d5b9bf68909d716f2198739dbae"
-url = "https://github.com/microsoft/apm/releases/download/v0.31.0/apm-linux-arm64.tar.gz"
-url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/566200572"
+checksum = "sha256:ada8901ce1b29e5d188629eeed64e8499853a8cb5f047630ebedbde24008508e"
+url = "https://github.com/microsoft/apm/releases/download/v0.35.0/apm-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/667315208"
 
 [tools."github:microsoft/apm"."platforms.linux-x64"]
-checksum = "sha256:866d7f2cc095e858e52c4c81e2fc0acb99d1fb1948fe5464165bb362d08e9645"
-url = "https://github.com/microsoft/apm/releases/download/v0.31.0/apm-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/566200570"
+checksum = "sha256:5aa23ce61eebae9411668f507772cdb5d87252c760078dc59b5acdc5188d785b"
+url = "https://github.com/microsoft/apm/releases/download/v0.35.0/apm-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/667315202"
 
 [tools."github:microsoft/apm"."platforms.macos-arm64"]
-checksum = "sha256:3b985ba7355b3cd925fd384f43af7d2d4591254431df28f5d0163f16d3a13e81"
-url = "https://github.com/microsoft/apm/releases/download/v0.31.0/apm-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/566200571"
+checksum = "sha256:cb2c54152e3bd39acfe2fbda4a2aa91d2af914e24859d3623423efd7b27e3dd0"
+url = "https://github.com/microsoft/apm/releases/download/v0.35.0/apm-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/667315207"
 
 [tools."github:microsoft/apm"."platforms.macos-x64"]
-checksum = "sha256:82582957856aa5d15f432431470027e05bdc04cdeb75eff99973a941701a0700"
-url = "https://github.com/microsoft/apm/releases/download/v0.31.0/apm-darwin-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/566200568"
+checksum = "sha256:ee17daf433c49ed481d9f2ddee31825cbced9390637cab9a5138815bbace327c"
+url = "https://github.com/microsoft/apm/releases/download/v0.35.0/apm-darwin-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/667315209"
