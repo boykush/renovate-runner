@@ -1,0 +1,26 @@
+name: mise
+
+# renovate.yml installs the mise tools only on its schedule, so a bump to mise.toml
+# that leaves mise.lock behind passes every PR check and then stops all Renovate runs.
+# Installing the same tools the same way on each PR catches that before merge.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  mise:
+    name: mise
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
