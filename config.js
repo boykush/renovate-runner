@@ -49,6 +49,13 @@ module.exports = {
   // Where a ruleset requires an approving review the PR still waits for one, since
   // Renovate can't approve itself — the label is what the approver App keys off.
   packageRules: [
+    // major は Dependency Dashboard でチェックを入れたものだけ PR にする。壊れやすい major が開いたまま
+    // repo の PR 上限（10）を埋め、後ろの更新が Rate-Limited で止まるのを防ぐ。後の rule で外せる。
+    {
+      description: 'Hold major updates until approved on the Dependency Dashboard',
+      matchUpdateTypes: ['major'],
+      dependencyDashboardApproval: true,
+    },
     {
       description: 'Automerge non-major updates to GitHub-authored actions',
       matchManagers: ['github-actions'],
@@ -75,6 +82,7 @@ module.exports = {
       matchManagers: ['github-actions'],
       matchPackageNames: ['jdx/mise-action'],
       matchUpdateTypes: ['major'],
+      dependencyDashboardApproval: false,
       automerge: true,
       addLabels: ['automerge'],
     },
