@@ -6,7 +6,7 @@ boykush 個人アカウントの**対象リポジトリを横断**して [Renova
 
 ## 仕組み
 
-`config.js` がセルフホスト用のグローバル設定で、`.github/workflows/renovate.yml` が4時間ごとにそれを回す。**なぜその設定なのかは、どちらもファイル自身のコメントが持つ**——autodiscover の範囲、Renovate に manager の無い `apm.yml` を拾う `customManagers`、bump と同じ commit で lock と生成物を追従させる `postUpgradeTasks`、automerge を同じ run の中で閉じる2 pass の理由まで。
+`config.js` がセルフホスト用のグローバル設定で、`.github/workflows/renovate.yml` が4時間ごとにそれを回す。**なぜその設定なのかは、どちらもファイル自身のコメントが持つ**——autodiscover の範囲、apm の manager が tag で追えない素の SHA を拾う `customManagers`、bump と同じ commit で lock と生成物を追従させる `postUpgradeTasks`、automerge を同じ run の中で閉じる2 pass の理由まで。
 
 - 各リポジトリ固有の設定は、そのリポジトリ内の `renovate.json` で行う。`config.js` に置くのは、**`renovate.json` を持たないリポジトリにも効かせる必要があるもの**だけ。
 - `.claude/skills/renovate-sweep/` は、Renovate PR を横断で棚卸し・マージし、automerge 拡大まで検討する Claude Code skill（ローカルの `gh` 権限で実行）。
