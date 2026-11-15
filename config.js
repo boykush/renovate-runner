@@ -117,7 +117,7 @@ module.exports = {
     // dotfiles の apm/apm.yml は user scope 向けで生成物を repo に持たないので、直下に絞る。
     {
       description: 'Regenerate what apm install derives from apm.yml in the same commit as the bump',
-      matchManagers: ['custom.regex'],
+      matchManagers: ['custom.regex', 'apm'],
       matchFileNames: ['apm.yml'],
       postUpgradeTasks: {
         commands: ['env -i HOME=/home/ubuntu PATH=/usr/bin:/bin /tmp/renovate-tools/apm/apm install'],
@@ -127,6 +127,13 @@ module.exports = {
         fileFilters: ['.mcp.json', '.claude/**', '.codex/**', '.agents/**', 'apm.lock.yaml'],
         executionMode: 'branch',
       },
+    },
+    // apm の manager は自分でも apm install を走らせるが、token 入りの git 設定を見せずに走らせる
+    // 手立てが無い。作り直しは上の postUpgradeTasks に任せる。
+    {
+      description: 'Leave apm install to the postUpgradeTasks above',
+      matchManagers: ['apm'],
+      skipArtifactsUpdate: true,
     },
     // ai-plugins は自前で、main の1 commit が apm.yml を持つ全 repo に同じ digest bump の PR を開く。
     // 中身は agent 向けの設定で CI では確かめようがなく、gate は上の rule の apm install が担う:
@@ -187,12 +194,10 @@ module.exports = {
     },
   ],
 
-  // apm (microsoft/apm) の依存は Renovate に manager が無いので regex で拾う。file format の
-  // 解釈であって repo ごとの方針ではなく、renovate.json を持たない repo（adr など）にも効かせたい
-  // ためグローバルに置く。customManagers は mergeable なので repo 側の定義とは足し算になる。
-  // 素の SHA を pin して main の HEAD を digest 更新で追う（tag は打たない運用）。
-  // 自前と第三者で manager を割らないのは、RE2 に否定先読みが無く「ai-plugins 以外」を書けないため。
-  // vendor 列挙にすると書き漏らした先が黙って追従対象から外れる。
+  // tag をコメントに添えた apm の依存（#<SHA> # <tag>）は Renovate の apm manager が tag で追う。
+  // その manager が「追う版が無い」と飛ばす、コメントの無い素の SHA だけをここで拾い、main の HEAD
+  // を digest 更新で追う。行末まで SHA で終わる行に絞るのは、tag 付きの行を二重に扱わないため。
+  // renovate.json を持たない repo（adr など）にも効かせたいのでグローバルに置く。
   customManagers: [
     {
       customType: 'regex',
@@ -200,7 +205,7 @@ module.exports = {
       managerFilePatterns: ['/(^|/)apm\\.yml$/'],
       // owner/repo を depName に取る。以降の subpath は package の位置なので依存の同一性に入れない。
       matchStrings: [
-        '(?<depName>[\\w.-]+/[\\w.-]+)(?:/[^#\\s]+)?#(?<currentDigest>[0-9a-f]{40})',
+        '(?<depName>[\\w.-]+/[\\w.-]+)(?:/[^#\\s]+)?#(?<currentDigest>[0-9a-f]{40})[ \\t]*(?:\\r?\\n|$)',
       ],
       currentValueTemplate: 'main',
       // git-refs は git ls-remote で全 ref を読むので、branch がいくつあっても main を引ける。
