@@ -108,6 +108,8 @@ module.exports = {
         'Skip workflows Terraform overwrites; bump github-management/templates instead',
       matchFileNames: [
         '.github/workflows/zizmor.yml',
+        '.github/workflows/gitleaks.yml',
+        '.github/workflows/dependabot-merge.yml',
       ],
       enabled: false,
     },

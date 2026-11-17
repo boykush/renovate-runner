@@ -4,7 +4,11 @@
   "packageRules": [
     {
       "description": "Workflows distributed by boykush/github-management are managed by Terraform and overwritten on `terraform apply`; do not update them here. Add new managed workflows to this list as they are introduced.",
-      "matchFileNames": [".github/workflows/zizmor.yml"],
+      "matchFileNames": [
+        ".github/workflows/zizmor.yml",
+        ".github/workflows/gitleaks.yml",
+        ".github/workflows/dependabot-merge.yml"
+      ],
       "enabled": false
     }
   ]
