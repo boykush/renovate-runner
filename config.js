@@ -137,23 +137,12 @@ module.exports = {
       matchManagers: ['apm'],
       skipArtifactsUpdate: true,
     },
-    // ai-plugins は自前で、main の1 commit が apm.yml を持つ全 repo に同じ digest bump の PR を開く。
-    // 中身は agent 向けの設定で CI では確かめようがなく、gate は上の rule の apm install が担う:
-    // 失敗すると renovate/artifacts が赤で残り、automerge しない。dotfiles の apm/apm.yml はそこを
-    // 通らないが、user scope に反映されるのは手で apm:apply したときだけ。
-    {
-      description: 'Automerge digest updates to boykush/ai-plugins',
-      matchManagers: ['custom.regex'],
-      // packageName は git-refs に渡す URL なので、owner/repo の depName で当てる。
-      matchDepNames: ['boykush/ai-plugins'],
-      matchUpdateTypes: ['digest'],
-      automerge: true,
-      addLabels: ['automerge'],
-      rebaseWhen: 'conflicted',
-    },
     // workflows も自前で、呼び出し側は素の SHA で固定している。main の1 commit が、その reusable
     // workflow や action を呼ぶ全 repo に同じ digest bump の PR を開くので、待たずに automerge する。
     // ai-review を入れた repo でも Renovate の PR は ai-review の対象外で、承認は sweep が出す。
+    // 自前の repo どうしが互いを素の SHA で固定すると、片方の bump の merge がもう片方の bump を呼び、
+    // run のたびに両方の main が動き続ける（adr と ai-plugins がそうなり、apm.yml を持つ全 repo に
+    // digest の PR が出続けた）。互いに参照するなら、片方は tag で固定する。
     {
       description: 'Automerge digest updates to boykush/workflows',
       matchManagers: ['custom.regex'],
@@ -163,9 +152,9 @@ module.exports = {
       addLabels: ['automerge'],
       rebaseWhen: 'conflicted',
     },
-    // 上の 2 つ（ai-plugins と workflows の digest）は、base が進んでも衝突しない限り PR を
-    // 作り直さない。既定（automerge 付きでは behind-base-branch）だと、github-management の配布
-    // commit や別の bump の merge で main が進むたびに開いている PR が rebase され、private repo
+    // workflows の digest の PR は、base が進んでも衝突しない限り作り直さない（上の rebaseWhen）。
+    // 既定（automerge 付きでは behind-base-branch）だと、github-management の配布 commit や
+    // 別の bump の merge で main が進むたびに開いている PR が rebase され、private repo
     // （Free: 2,000 Actions 分/月）ではそのたびに PR の CI が走り直す。public repo の ruleset は
     // 最新への追従を求めていない（github-management の modules/ruleset、strict = false）ので、
     // 遅れた branch のまま automerge できる。新しい digest への更新はこれまでどおり入る。
@@ -194,7 +183,11 @@ module.exports = {
       minimumReleaseAge: null,
     },
     // 自前のものは待たずに取り込む。出した本人が中身を知っているので、手で見る段を挟まない。
-    // gate は取り込む側の repo の CI。major は壊す変更を含みうるので手で見る。
+    // gate は取り込む側の repo の CI。major は壊す変更を含みうるので手で見る。apm.yml の依存
+    // （tag で固定した自前の plugin）は agent 向けの設定で CI では確かめようがなく、gate は上の
+    // postUpgradeTasks の apm install が担う: 失敗すると renovate/artifacts が赤で残り、automerge
+    // しない。dotfiles の apm/apm.yml はそこを通らないが、user scope に反映されるのは手で
+    // apm:apply したときだけ。
     {
       description: "Automerge non-major updates to boykush's own releases",
       matchPackageNames: OWN_PACKAGES,
