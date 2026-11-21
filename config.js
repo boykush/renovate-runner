@@ -149,6 +149,7 @@ module.exports = {
       matchUpdateTypes: ['digest'],
       automerge: true,
       addLabels: ['automerge'],
+      rebaseWhen: 'conflicted',
     },
     // workflows も自前で、呼び出し側は素の SHA で固定している。main の1 commit が、その reusable
     // workflow や action を呼ぶ全 repo に同じ digest bump の PR を開くので、待たずに automerge する。
@@ -160,7 +161,14 @@ module.exports = {
       matchUpdateTypes: ['digest'],
       automerge: true,
       addLabels: ['automerge'],
+      rebaseWhen: 'conflicted',
     },
+    // 上の 2 つ（ai-plugins と workflows の digest）は、base が進んでも衝突しない限り PR を
+    // 作り直さない。既定（automerge 付きでは behind-base-branch）だと、github-management の配布
+    // commit や別の bump の merge で main が進むたびに開いている PR が rebase され、private repo
+    // （Free: 2,000 Actions 分/月）ではそのたびに PR の CI が走り直す。public repo の ruleset は
+    // 最新への追従を求めていない（github-management の modules/ruleset、strict = false）ので、
+    // 遅れた branch のまま automerge できる。新しい digest への更新はこれまでどおり入る。
     // github-actions の manager も同じ uses: の行を拾いうるが、版の書かれていない SHA は上げられない。
     // 下の customManager に任せ、二重に扱わせない。
     {
