@@ -18,7 +18,8 @@ spec:
     - adr-mcp
     - catalog-mcp
   dependsOn:
-    - component:ai-plugins
+    - component:adr
+    - component:backstage-app
     - component:workflows
     - resource:renovate-app
     - resource:pr-approver-app
